@@ -1,0 +1,5 @@
+mode=clean
+ticks=25
+interval_count=24
+min_interval_us=96432
+max_interval_us=102364

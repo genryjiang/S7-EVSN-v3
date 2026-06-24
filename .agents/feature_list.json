@@ -1,0 +1,1562 @@
+{
+  "$schema": "./schemas/work-items.schema.json",
+  "project": "S7-EVSN",
+  "last_updated": "2026-06-24",
+  "items": [
+    {
+      "id": "VSN-0001",
+      "priority": 1,
+      "area": "testing",
+      "title": "Maintain trustworthy autonomous Linux verification",
+      "desired_outcome": "Developers and agents can build and execute deterministic Linux tests through one non-interactive command.",
+      "status": "passing",
+      "plan_path": null,
+      "acceptance_criteria": [
+        "The standard gate validates repository controls before compiling",
+        "Linux build intermediates and installed output remain isolated from QNX output",
+        "CTest executes inside the AMD64 builder and reports failures non-interactively",
+        "Same-container DDS integration tests avoid Docker Desktop UDP multicast limitations"
+      ],
+      "verification_commands": [
+        "./init.sh verify"
+      ],
+      "evidence": [
+        "2026-06-11: ./harness/verify.sh validated 5 work items and links in 23 Markdown files, built and installed the AMD64 Linux targets, and passed 2 bounded DDS node smoke tests",
+        "2026-06-11: Single-builder ./harness/verify.sh passed 6 work items, links in 23 Markdown files, full Linux build/install, and 4 CTest tests",
+        "2026-06-12: Docker Desktop macOS rejected IP_MULTICAST_IF with Protocol not available; motor-driver DDS integration now uses RTI shared-memory transport for same-container Linux tests",
+        "2026-06-12: ./scripts/linux-test passed all 5 CTest tests after example and motor-driver DDS wrappers switched same-container tests to RTI shared-memory transport",
+        "2026-06-12: ./harness/verify.sh passed 6 work items, links in 24 Markdown files, full Linux build/install, and all 5 CTest tests",
+        "2026-06-12: Increased bounded example smoke-test timeouts for slower Docker Desktop runs; ./harness/verify.sh passed all 5 CTest tests",
+        "2026-06-13: Fixed Linux clean builds to remove hidden Ninja state as well as normal files; VERIFY_QNX=1 ./harness/verify.sh passed work-item/docs validation, clean Linux build/install, all 6 CTest tests, and QNX build/install"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "notes": "Add focused deterministic tests as application behavior is implemented."
+    },
+    {
+      "id": "VSN-0002",
+      "priority": 1,
+      "area": "qnx-build",
+      "title": "Verify canonical QNX cross-compilation",
+      "desired_outcome": "The AWS-published AMD64 builder reliably produces identifiable QNX artifacts.",
+      "status": "passing",
+      "plan_path": null,
+      "acceptance_criteria": [
+        "The repository QNX toolchain configures qcc and the intended QNX target",
+        "The QNX build completes through scripts/qnx-build",
+        "Produced binaries are verified as QNX artifacts and staged under out/qnx"
+      ],
+      "verification_commands": [
+        "VERIFY_QNX=1 ./init.sh verify",
+        "file out/qnx/bin/*"
+      ],
+      "evidence": [
+        "2026-06-11: QNX wrapper verifies AMD64 architecture, baked-in SDK paths, srbuild, and cmake/qnx.toolchain.cmake before building",
+        "2026-06-11: Repository contains cmake/qnx.toolchain.cmake; licensed QNX build and artifact inspection remain unverified",
+        "2026-06-11: VERIFY_QNX=1 ./harness/verify.sh refused the cross-build because the licensed builder image contains no RTI QNX target libraries",
+        "2026-06-11: Standalone builder configured CMake with QCC 12.2.0 through unchanged srbuild by exporting CMAKE_TOOLCHAIN_FILE",
+        "2026-06-11: QNX compilation reached linking; linking failed because the published RTI archive contains only x64Linux4gcc7.3.0"
+      ],
+      "dependencies": [],
+      "blockers": [
+        "The licensed builder image contains no RTI QNX target libraries",
+        "The intended production QNX target architecture must be confirmed before replacing the current x86_64 toolchain setting"
+      ],
+      "notes": "S130_dev-tools does not require a code change for toolchain selection. Do not mark passing until a builder with RTI QNX target libraries links and artifact inspection succeeds."
+    },
+    {
+      "id": "VSN-0003",
+      "priority": 2,
+      "area": "developer-environment",
+      "title": "Provide native QNX and RTI IntelliSense",
+      "desired_outcome": "Native macOS and WSL/Linux clangd resolve QNX and RTI headers without exposing full SDKs.",
+      "status": "in_progress",
+      "plan_path": null,
+      "acceptance_criteria": [
+        "Only header subsets and QCC predefined macros are copied into ignored host-visible storage",
+        "QNX and RTI include paths are available to native clangd",
+        "Builder compile commands are normalized for native host paths",
+        "Native editor settings point IntelliSense at the host-normalized compile database",
+        "Developers can open interactive builder shells from native VS Code or Cursor",
+        "Developers have one documented repo-local CLI for setup, builds, shells, cleanup, and editor metadata"
+      ],
+      "verification_commands": [
+        "./scripts/qnx-sync-headers",
+        "./scripts/qnx-compile-commands",
+        "./scripts/check-native-intellisense",
+        "./scripts/check-docker-multicast"
+      ],
+      "evidence": [
+        "2026-06-11: Native ARM64 dev-container clangd resolved QNX and RTI headers from read-only header-cache volumes",
+        "2026-06-11: Replaced the devcontainer with a standalone AMD64 builder and exported 287 MB QNX plus 21 MB RTI host-visible IntelliSense headers",
+        "2026-06-11: Generated separate container and host-normalized compile databases for native clangd",
+        "2026-06-11: Native macOS clangd completed against the QNX/RTI project compile database with 0 errors",
+        "2026-06-11: Native IntelliSense smoke check resolved sys/neutrino.h and rti/util/util.hpp with 0 errors",
+        "2026-06-15: Removed obsolete broker-client header export from native IntelliSense because ordinary SRNode builds are DDS-only",
+        "2026-06-12: ./scripts/check-docker-multicast documents Docker Desktop macOS IP_MULTICAST_IF failure while leaving native IntelliSense verification independent",
+        "2026-06-12: Added tracked VS Code C/C++ compileCommands configuration and editor compile-database fallback include roots for local DDS headers such as std_types.hpp and SRFDCanFrame",
+        "2026-06-12: clangd exact-file check for motor_driver_node.cpp passed with 0 errors and ./harness/verify.sh passed all 5 CTest tests after linking motor_driver directly to std_types",
+        "2026-06-12: Added native VS Code/Cursor QNX Builder terminal profile and interactive shell task backed by scripts/qnx-shell",
+        "2026-06-12: Added scripts/sr-dev as the preferred repo-local CLI while keeping legacy scripts available",
+        "2026-06-12: Verified scripts/sr-dev help, intellisense check, and linux build motor_driver paths",
+        "2026-06-13: scripts/qnx-sync-headers now keys the header cache by aarch64le and generates QNX predefines through scripts/qnx-aarch64-g++; ./scripts/qnx-sync-headers completed successfully",
+        "2026-06-13: Added .clangd and compile-database rewrite guards for QCC-only flags such as -Y_cxx; native clangd checks passed for the IntelliSense smoke file and motor_driver/src/main.cpp",
+        "2026-06-20: Added vcan-drivers/dev-can-linux to host-normalized IntelliSense compile-database editor flags so commands.h can resolve for QNX CAN gateway development; py_compile, node --check, EVSN CLI unit tests, compile-commands dry-run, ./init.sh check, and git diff --check passed"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "notes": "Header exports intentionally contain no compilers, libraries, or licensed executables. Native macOS is verified; WSL/Linux verification remains pending. Touched files for the vcan commands.h IntelliSense update: tools/evsn_cli/compile_commands.py, scripts/rewrite-compile-commands.mjs, tests/evsn_cli/test_cli.py, .agents/logs/2026-06-20-vcan-intellisense.md."
+    },
+    {
+      "id": "VSN-0004",
+      "priority": 2,
+      "area": "target-testing",
+      "title": "Add autonomous QNX runtime verification",
+      "desired_outcome": "An agent can deploy to a QEMU or approved remote QNX target, execute bounded tests, and collect evidence.",
+      "status": "in_progress",
+      "plan_path": null,
+      "acceptance_criteria": [
+        "Target connection details are supplied outside version control",
+        "Deployment and execution scripts are bounded, non-interactive, and target-scoped",
+        "Logs, exit status, and artifact identity are collected for each run"
+      ],
+      "verification_commands": [],
+      "evidence": [],
+      "dependencies": [
+        "VSN-0002"
+      ],
+      "blockers": [
+        "No approved QEMU or remote QNX target contract and credentials are configured"
+      ],
+      "notes": "Remote target mutation must remain opt-in and outside the default local gate."
+    },
+    {
+      "id": "VSN-0005",
+      "priority": 2,
+      "area": "application-testing",
+      "title": "Expand node and DDS behavior coverage",
+      "desired_outcome": "Implemented nodes and shared DDS behavior have deterministic unit and integration tests.",
+      "status": "in_progress",
+      "plan_path": null,
+      "acceptance_criteria": [
+        "Each implemented node has tests for its declared behavior",
+        "Unit tests use the GoogleTest framework and remain registered with CTest",
+        "DDS integration tests isolate domains, processes, ports, and temporary files",
+        "Tests run through CTest and the standard Linux verification gate"
+      ],
+      "verification_commands": [
+        "./init.sh verify"
+      ],
+      "evidence": [
+        "2026-06-11: Added deterministic motor-controller unit coverage and an isolated-domain motor-driver DDS integration test; both pass through ./harness/verify.sh",
+        "2026-06-15: Converted standalone unit-test executables to GoogleTest while preserving CTest as the harness runner, and updated srpkg scaffolding so new packages generate GTest test templates"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "notes": "Scale coverage with application implementation and safety impact."
+    },
+    {
+      "id": "VSN-0006",
+      "priority": 1,
+      "area": "vehicle-control",
+      "title": "Implement deterministic motor driver node",
+      "desired_outcome": "A reviewed DDS motor-driver node continuously publishes valid MCU control commands and exposes MCU feedback without bypassing vehicle safety policy.",
+      "status": "blocked",
+      "plan_path": "docs/exec-plans/active/11-06-26_motor_driver.md",
+      "acceptance_criteria": [
+        "Approved DDS and CAN gateway contracts document every motor command and feedback field, unit, owner, rate, and stale-data behavior",
+        "The node publishes a complete raw CAN 0x160 VCU_MCU_Control frame every 2 ms and never authorizes torque or privileged operations from missing or stale inputs",
+        "Deterministic unit and DDS integration tests pass through the standard Linux gate",
+        "The QNX artifact builds and bench capture verifies CAN 0x160 scaling and timing before hardware-in-the-loop approval"
+      ],
+      "verification_commands": [
+        "./init.sh verify",
+        "VERIFY_QNX=1 ./init.sh verify"
+      ],
+      "evidence": [
+        "2026-06-11: Implementation plan expanded using repository architecture, current SRNode behavior, and MCU Software User Manual V01",
+        "2026-06-11: Required RTI Connext and proprietary QNX MCPs were connected and exercised; RTI supplied initial 500 Hz command QoS guidance, while the QNX official documentation corpus was not indexed",
+        "2026-06-11: SCH_Sunswift_V03R06.dbc and the close/hold safety policy were approved as implementation inputs",
+        "2026-06-11: Generated motor DDS contracts and implemented the deterministic motor controller, DDS node, QoS support, unit tests, and isolated-domain DDS integration test",
+        "2026-06-11: ./harness/verify.sh passed the clean AMD64 Linux build/install and all four CTest tests, including motor_controller_test and motor_driver_dds_integration",
+        "2026-06-11: VERIFY_QNX=1 ./harness/verify.sh passed the Linux gate but the QNX cross-build refused to run because the licensed builder image contains no RTI QNX target libraries",
+        "2026-06-11: Final ./harness/verify.sh passed all repository checks, the clean Linux build/install, and all four CTest tests",
+        "2026-06-12: Motor driver was converted to the then-current raw CAN gateway model: publish SRFDCanFrame 0x160 on /to/can/0, subscribe SRFDCanFrame feedback IDs 0x170/0x172/0x174/0x175 on /from/can/0, and keep decoded SRMcu* structures internal/status-facing; VSN-0017 later supersedes those provisional topic names with /can<bus>/from_can_bus and /can<bus>/to_can_bus defaults",
+        "2026-06-12: ./harness/verify.sh passed work-item and documentation checks, clean AMD64 Linux build/install, and all five CTest tests including motor_can_codec_test and motor_driver_dds_integration; out/linux/bin/motor_driver was installed",
+        "2026-06-12: VERIFY_QNX=1 ./harness/verify.sh passed the Linux gate and all five CTest tests, then refused the QNX cross-build because the licensed builder image contains no RTI QNX target libraries; no out/qnx/bin/motor_driver artifact was produced"
+      ],
+      "dependencies": [
+        "VSN-0002",
+        "VSN-0005"
+      ],
+      "blockers": [
+        "The licensed builder image contains no RTI QNX target libraries, so the QNX motor-driver artifact cannot be produced",
+        "Gateway bench timing/scaling and hardware-in-the-loop procedures have not run"
+      ],
+      "notes": "Implementation is complete enough for build verification; do not deploy to a live vehicle before bench and hardware-in-the-loop acceptance."
+    },
+    {
+      "id": "VSN-0007",
+      "priority": 1,
+      "area": "process-management",
+      "title": "Add QNX HAM supervision to the shared DDS node runtime",
+      "desired_outcome": "Every production QNX DDS node attaches to QNX HAM with a documented heartbeat and restart policy while Linux builds use an explicit no-op backend.",
+      "status": "blocked",
+      "plan_path": "docs/exec-plans/active/13-06-26_qnx_ham_supervision.md",
+      "acceptance_criteria": [
+        "Required RTI Connext and QNX MCPs are connected and used before implementation begins",
+        "Official QNX HAM API evidence is recorded for attach, heartbeat, conditions, actions, and cleanup",
+        "Linux builds compile and test the shared SRNode runtime without QNX HAM headers or libraries",
+        "QNX builds compile a HAM backend that self-attaches each node process and fails clearly when HAM development files are unavailable",
+        "SRNode heartbeats only from the real DDS/timer dispatch path after useful loop progress",
+        "The heartbeat period, missed-heartbeat thresholds, process-death behavior, restart policy, and escalation behavior are documented",
+        "A QNX target or approved QNX runtime smoke test demonstrates attach, heartbeat, missed-heartbeat handling, process-death handling, and restart behavior"
+      ],
+      "verification_commands": [
+        "./init.sh verify",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "QNX HAM runtime smoke test on an approved target or deterministic QNX runtime"
+      ],
+      "evidence": [
+        "2026-06-13: Created active execution plan docs/exec-plans/active/13-06-26_qnx_ham_supervision.md after implementation was blocked by missing RTI Connext MCP availability",
+        "2026-06-13: Required RTI Connext and QNX MCPs were connected and exercised; QNX MCP local HAM results were limited to index pages, so official QNX 8.0 HAM documentation was used for attach, heartbeat, condition, action, and detach API evidence",
+        "2026-06-13: RTI Connext MCP confirmed process restart creates a new participant instance, peers rediscover through normal discovery, volatile topics do not replay historical samples to true late joiners, and shutdown should stop application work before deleting DDS entities",
+        "2026-06-13: Added core/sr_node supervision abstraction, Linux no-op backend, QNX HAM backend with compile-time <ha/ham.h>/libham requirements, SRNode spin-loop heartbeat integration, CMake backend selection, and sr_node_supervision_test",
+        "2026-06-13: ./harness/verify.sh passed work-item and documentation checks, clean AMD64 Linux build/install, and all six CTest tests including sr_node_supervision_test",
+        "2026-06-13: VERIFY_QNX=1 ./harness/verify.sh passed the Linux prerequisite gate and all six CTest tests, then failed before QNX CMake configure with Error: not a git repository (or any of the parent directories) from the existing S130_dev-tools/host/srbuild repository-root check",
+        "2026-06-13: Booted /Users/henryjiang/qnxprojects/targets/qemu-qnx800-aarch64 with run.sh, connected over SSH on localhost:2222, copied AArch64 ham/hamctrl/libham.so.2 from the builder into the guest because the image did not include HAM, and verified /proc/ham plus hamctrl heartbeat control",
+        "2026-06-13: Built harness/qnx/ham_smoke.c as an AArch64 QNX executable with the SDK GCC driver and ran it in QEMU; marker files and /tmp/ham.log demonstrated self-attach, heartbeat delivery, low/high missed-heartbeat actions, process-death restart, restarted heartbeat, and normal detach",
+        "2026-06-13: Focus-compiled core/sr_node/node_supervisor.cpp and qnx_ham_node_supervisor.cpp into AArch64 QNX object files with <ha/ham.h> and -Wall -Wextra -Werror",
+        "2026-06-13: Added a one-shot safe.directory=/workspace/project Git config to scripts/qnx-build; ./scripts/qnx-build now passes srbuild repository-root detection and reaches CMake configure",
+        "2026-06-13: After the Git trust fix, ./scripts/qnx-build failed at the HAM dependency check because cmake/qnx.toolchain.cmake selects gcc_ntox86_64_cxx while the current QNX target sysroot contains AArch64 startup/HAM libraries under aarch64le",
+        "2026-06-13: Updated cmake/qnx.toolchain.cmake and scripts/qnx-build for the current AArch64 QNX target; ./scripts/qnx-build passed with CMake compiler wrappers qnx-aarch64-gcc/qnx-aarch64-g++, RTI Connext architecture armv8QNX8.0qcc_cxx12.2.0, installed QNX binaries, and refreshed out/qnx/compile_commands.json",
+        "2026-06-13: file /workspace/project/deploy/bin/motor_driver reported an ELF 64-bit LSB pie executable for ARM aarch64 with QNX interpreter /usr/lib/ldqnx-64.so.2",
+        "2026-06-13: VERIFY_QNX=1 ./harness/verify.sh passed work-item/docs validation, clean AMD64 Linux build/install, all 6 CTest tests, and QNX build/install plus QNX compile-database refresh"
+      ],
+      "dependencies": [
+        "VSN-0002",
+        "VSN-0004"
+      ],
+      "blockers": [
+        "The QEMU HAM smoke test used a standalone helper; full runtime acceptance still needs a QEMU smoke run of a repository binary linked through the QNX build path"
+      ],
+      "notes": "Keep HAM integration in core/sr_node unless S130_dev-tools scaffolding must change. If S130_dev-tools changes are needed, create a new branch from ryan/feat/qnx_support and coordinate through the GitHub plugin."
+    },
+    {
+      "id": "VSN-0008",
+      "priority": 1,
+      "area": "middleware-integration",
+      "title": "Replace per-node MQTT with native RTI DDS parameters",
+      "desired_outcome": "SRNodes expose ROS-like parameters through RTI Connext DDS request/reply and state/event topics, load safe per-node TOML defaults on startup, and keep MQTT/AWS IoT Shadow logic out of ordinary DDS nodes.",
+      "status": "in_progress",
+      "plan_path": "docs/exec-plans/active/15-06-26_native_dds_parameters.md",
+      "acceptance_criteria": [
+        "Implementation starts from a branch created off origin/ryan/feat/cmake_update/qnx_support, with no work based on the current unrelated dirty checkout state",
+        "Required RTI Connext and QNX MCPs are connected and used before source implementation begins",
+        "SRNode has no mandatory MQTT client, MQTT helper thread, MQTT subscriber, Mosquitto dependency, or AWS IoT Shadow callback",
+        "Each node has a safe parameter defaults TOML file under its package param directory, with schema, type, unit, mutability, bounds, and startup fallback behavior documented",
+        "S130_dev-tools node creation scaffolds the per-node TOML defaults file and package README section for parameters",
+        "SRNode startup loads TOML defaults before any external parameter request is accepted",
+        "Runtime parameter set/get/list/describe operations use DDS request/reply",
+        "Parameter current state is published on a keyed DDS topic keyed by node name and parameter name, using QoS suitable for late joiners",
+        "Parameter changes and rejections are published on a DDS event topic with requester, source, timestamp, validation result, and reason",
+        "Only declared remotely mutable parameters may be changed at runtime; vehicle-control state remains explicit command/state DDS APIs",
+        "External sources such as AWS IoT Device Shadows and Flutter reach parameters only through bridge work items",
+        "Deterministic tests cover TOML loading, invalid TOML, bounds/type validation, request/reply success and rejection, late-joiner state visibility, and MQTT runtime removal",
+        "Architecture, SRNode, S130_dev-tools, and node package docs describe the DDS-native parameter model and the decision to keep MQTT out of ordinary DDS nodes"
+      ],
+      "verification_commands": [
+        "./init.sh verify",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "ctest -R \"sr_parameter_service_test|sr_node_no_mqtt_runtime\" --output-on-failure"
+      ],
+      "evidence": [
+        "2026-06-15: User replaced the previous per-node MQTT plan with a DDS-native parameter architecture: safe TOML defaults in each node, SR-dev tooling must scaffold the file, startup loads TOML as fallback, and application bridge owns AWS IoT Shadow and Flutter ingress",
+        "2026-06-15: Required RTI Connext MCP supplied request/reply, keyed LastValueCache state QoS, event QoS, and shutdown-order guidance for Modern C++ 7.3.x in the sibling implementation worktree",
+        "2026-06-15: Required QNX MCP reported the QNX 8.0 corpus status and reiterated using existing CMake/Ninja wrappers rather than direct qcc/q++ commands in the sibling implementation worktree",
+        "2026-06-15: Implementation branch henry/native-dds-parameters was created off origin/ryan/feat/cmake_update/qnx_support and fast-forwarded only through the clean committed harness branch; no dirty checkout files were imported",
+        "2026-06-15: Added sr_params IDL/generated types, SRParameterService, TOML loading, validation, DDS request/reply, keyed state publishing, event publishing, package TOML defaults, and S130_dev-tools scaffolding updates",
+        "2026-06-15: Focused sr_parameter_service_test and sr_node_no_mqtt_runtime CTest cases passed inside the sibling builder",
+        "2026-06-15: Cleanup-only pass removed the legacy per-node MQTT bridge runtime, broker-client build hook, fake bridge test target, obsolete IntelliSense export path, and stale SRNode documentation from the current checkout",
+        "2026-06-15: Merged the sibling native-DDS-parameters worktree into the current dirty checkout while preserving newer HAM supervision, motor-controller, pedal-driver, and MQTT-cleanup work",
+        "2026-06-15: Recreated the qnx-build container so /workspace/project mounted the current checkout rather than the sibling worktree",
+        "2026-06-15: ./harness/verify.sh passed work-item/docs validation, clean AMD64 Linux build/install, and all 11 CTest tests in the merged checkout",
+        "2026-06-15: VERIFY_QNX=1 ./harness/verify.sh passed the Linux prerequisite gate, all 11 CTest tests, selected QNX RTI architecture armv8QNX8.0qcc_cxx12.2.0, built/installed QNX artifacts including parameter TOML files, and refreshed out/qnx/compile_commands.json in the merged checkout",
+        "2026-06-15: python3 -m pytest S130_dev-tools/host/tests/test_srpkg_integration.py passed all 14 scaffold tests in the merged checkout"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0007"
+      ],
+      "blockers": [
+        "S130_dev-tools changes are currently in the submodule working tree and need a submodule commit before the parent repo can point at an immutable scaffold update",
+        "The QNX wrapper uses repo-local AArch64 GCC-driver wrappers because qcc license checks fail in the current builder; toolchain ownership should review this before production release"
+      ],
+      "notes": "This item supersedes mandatory MQTT-in-every-SRNode designs. MQTT belongs in bridge nodes, not ordinary DDS nodes."
+    },
+    {
+      "id": "VSN-0009",
+      "priority": 1,
+      "area": "vehicle-control",
+      "title": "Implement deterministic pedal driver node",
+      "desired_outcome": "A reviewed DDS pedal-driver node publishes validated accelerator percentage and torque scalar from the selected dual-channel throttle sensor without directly authorizing motor torque.",
+      "status": "blocked",
+      "plan_path": "docs/exec-plans/active/13-06-26_pedal_drvier_node.md",
+      "acceptance_criteria": [
+        "The selected throttle sensor wiring, voltage ranges, inverse-channel behavior, calibration assumptions, and bench calibration procedure are documented",
+        "An approved raw pedal ingress contract exists for CAN gateway bus topic, pedal-box CAN identifier, payload layout, scaling, and message period",
+        "The node publishes complete pedal state samples with raw channels, normalized percent, scalar, validity flags, and diagnostics",
+        "Invalid, stale, implausible, NaN, or infinite input publishes an invalid pedal state with zero accelerator scalar",
+        "The pedal driver does not publish MCU commands or directly authorize motor torque",
+        "Deterministic unit and DDS integration tests pass through the standard Linux gate",
+        "The QNX artifact builds and bench/HIL evidence proves invalid or stale pedal input cannot create non-zero motor torque"
+      ],
+      "verification_commands": [
+        "./init.sh verify",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "Bench calibration and HIL pedal fault-injection procedure"
+      ],
+      "evidence": [
+        "2026-06-13: Filled active execution plan docs/exec-plans/active/13-06-26_pedal_drvier_node.md using repository architecture, current motor-driver contract, the selected H-TPS-MS-V-DBW sensor sheet, and the MCU software manual",
+        "2026-06-13: Local PDF extraction recorded H-TPS-MS-V-DBW dual inverse throttle channels, 5 V +/-0.5 V operation, wiring, Channel 1 nominal 1.2 V closed and 4.2 V open values, and full output ranges of 0.25 V to 4.75 V / 4.75 V to 0.25 V over 0 to 110 degrees",
+        "2026-06-13: QNX MCP was connected and exercised; corpus status reported QNX 8.0 documentation availability, but task-specific application context returned no evidence because local documentation search failed",
+        "2026-06-13: RTI Connext MCP was discoverable but blocked by OAuth authorization during the required guidance call",
+        "2026-06-13: Updated the pedal plan after reviewing the SR8 software systems design diagram and user clarification: pedal_driver publishes normalized accelerator and brake-light/status data only, while the motor-controller revision owns throttle scaling, gear policy, and LHS/RHS motor requests",
+        "2026-06-13: Clarified pedal-box ingress: the hall-effect throttle sensor is expected to be translated by a PCB into CAN-readable data, then delivered through the CAN gateway as SRFDCanFrame samples; pedal-box CAN IDs, bus, DBC/payload layout, scaling, and period remain undefined",
+        "2026-06-13: Required RTI Connext and QNX MCPs were connected and exercised before source changes; RTI Connext 7.3.1 guidance and validation were recorded for the pedal-state writer QoS, and QNX MCP constraints continued to require the existing CMake/Ninja wrapper build path",
+        "2026-06-13: Added generated SRPedalState type support, a deterministic PedalProcessor, a safe pedal_driver executable that publishes stale invalid zero-scalar state until CAN ingress is approved, and pedal_processor_test coverage for scaling, stale input, invalid electrical range, channel mismatch, NaN/inf, calibration failure, diagnostics, and sample counter behavior",
+        "2026-06-13: Pre-change ./harness/verify.sh passed all 6 CTest tests; focused build of pedal_processor_test and pedal_driver compiled, direct pedal_processor_test execution passed, and the partial-target helper exposed the existing global install limitation when unrelated example executables were not built"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0006"
+      ],
+      "blockers": [
+        "The raw pedal CAN gateway ingress contract is not approved: pedal-box bus topic, CAN identifiers, DBC/payload layout, scaling, and period are undefined",
+        "The motor-controller torque-limit source, steering-wheel gear CAN mapping, and LHS/RHS motor topic contract need approval",
+        "Brake input is limited to brake-light/status until a separate approved safety plan changes that scope",
+        "Bench calibration and HIL evidence have not been recorded"
+      ],
+      "notes": "Keep pedal sensing separate from motor torque authorization. The pedal node publishes validated accelerator state; the motor-controller layer scales approved torque limits and publishes LHS/RHS motor requests."
+    },
+    {
+      "id": "VSN-0010",
+      "priority": 1,
+      "area": "vehicle-control",
+      "title": "Revise motor control request authority",
+      "desired_outcome": "A dedicated motor-controller node scales validated pedal input with gear, torque limits, and motor feedback, then publishes LHS and RHS motor requests while motor drivers remain low-level MCU command executors.",
+      "status": "blocked",
+      "plan_path": "docs/exec-plans/active/13-06-26_motor_controller_driver-revision.md",
+      "acceptance_criteria": [
+        "The motor-controller node boundary is documented as the request authority between pedal state and motor-driver requests",
+        "LHS and RHS motor-driver topic names, process names, parameters, CAN bus mappings, and MCU CAN identifiers are approved",
+        "First-release LHS and RHS motor-driver command outputs remain identical for the same valid inputs except for side-local stale input, feedback, or fault fallback",
+        "The existing motor-driver internal motor_controller library target is renamed or isolated to avoid confusion with the new motor-controller node",
+        "The motor controller publishes zero torque on startup, stale pedal, stale steering-wheel gear command, stale motor feedback, invalid torque limits, unsupported modes, and invalid inputs",
+        "Traction control, ABS, ESC, and brake-based torque changes are not implemented from the outdated diagram content",
+        "Deterministic unit and DDS integration tests pass through the standard Linux gate",
+        "The QNX build produces the motor controller and parameterized LHS/RHS motor-driver artifacts or launch configurations"
+      ],
+      "verification_commands": [
+        "./init.sh verify",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "Bench and HIL stale-input/fault-injection procedure"
+      ],
+      "evidence": [
+        "2026-06-13: Created active execution plan docs/exec-plans/active/13-06-26_motor_controller_driver-revision.md after reviewing the SR8 software systems design diagram",
+        "2026-06-13: User clarified that traction and ABS are provided by brake boosters/IBSE9s, throttle scaling is done by a motor controller that also consumes gear and related inputs, and pedal/brake network data is mainly needed for brake lights",
+        "2026-06-13: Updated the motor-controller revision plan and motor-driver README to require separate LHS/RHS motor-driver instances with identical first-release command outputs; the split is intentionally reserved for future approved torque-vectoring or stability-control integration",
+        "2026-06-13: Clarified pedal, motor-controller, and motor-driver planning docs so brake input is brake-light/status data only and must not affect motor torque in this release",
+        "2026-06-13: Clarified motor-controller gear source: a future steering-wheel driver/controller will publish /vehicle/drive/gear as a semantic DDS enum decoded from raw CAN gear-position input; provisional enum values are PARK=0, REVERSE=1, NEUTRAL=2, DRIVE=3, with a minimal Park-defaulting publisher allowed for tests until the steering-wheel node exists",
+        "2026-06-13: RTI Connext MCP recommended keyed motor-side instances with volatile KEEP_LAST(1) latest-command QoS; implementation preserved the plan-approved separate RHS/LHS topics and applied volatile latest-command QoS",
+        "2026-06-13: QNX MCP was connected and queried for the controller plus dual-driver process task; the local QNX 8.0 corpus was available but returned no specific process-startup evidence, so the implementation kept existing SRNode HAM supervision and environment-driven process configuration",
+        "2026-06-13: Added generated sr_drive DDS contracts, a dedicated src/vehicle_interface/motor_controller node, pure MotorRequestPolicy, controller diagnostics, RHS/LHS request publishers, unit tests, and an isolated-domain DDS integration test",
+        "2026-06-13: Renamed the motor-driver internal motor_controller target/class to motor_driver_controller/MotorDriverController and parameterized motor-driver node name, request/status topics, and CAN RX/TX topics through environment variables",
+        "2026-06-13: LINUX_BUILD_JOBS=4 ./harness/verify.sh passed work-item/docs validation, clean AMD64 Linux build/install, and all 10 CTest tests including motor_request_policy_test and motor_controller_dds_integration",
+        "2026-06-13: LINUX_BUILD_JOBS=4 VERIFY_QNX=1 ./harness/verify.sh passed the full Linux prerequisite gate and all 10 CTest tests, then failed QNX CMake configure before the legacy broker-client dependency was removed from SRNode"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0006",
+        "VSN-0009"
+      ],
+      "blockers": [
+        "LHS/RHS motor CAN bus, CAN identifier, and launch mapping need approval",
+        "Steering-wheel gear-position CAN ID, payload layout, bus, raw value mapping, and freshness timeout need approval",
+        "Torque limits per side and per gear need approval",
+        "Regen behavior is shown in the diagram but remains unapproved",
+        "Bench and HIL evidence have not been recorded"
+      ],
+      "notes": "This item replaces the earlier vague request-authority concept. The pedal driver publishes normalized state; the motor controller publishes absolute LHS/RHS SRMotorRequest samples; each motor driver remains the final MCU safety gate."
+    },
+    {
+      "id": "VSN-0011",
+      "priority": 1,
+      "area": "app-integration",
+      "title": "Implement application bridge for Flutter and AWS parameter ingress",
+      "desired_outcome": "A dedicated application bridge exposes one reviewed API for Flutter infotainment and AWS IoT Device Shadow ingress, translates accepted requests into DDS parameter and command request/reply calls, and streams authoritative DDS state back to clients.",
+      "status": "not_started",
+      "plan_path": "docs/exec-plans/active/15-06-26_application_bridge.md",
+      "acceptance_criteria": [
+        "Implementation starts from a branch created off origin/ryan/feat/cmake_update/qnx_support after VSN-0008 defines the DDS parameter contracts",
+        "Required RTI Connext, QNX, and AWS documentation evidence is recorded before source implementation begins",
+        "The bridge is the only component that talks to AWS IoT Device Shadows for parameter/config ingress; ordinary DDS nodes do not subscribe to MQTT or shadows",
+        "Flutter talks to the bridge through an explicit local API such as WebSocket, gRPC, or HTTP, not directly to arbitrary DDS topics",
+        "AWS IoT Device Shadow desired-state updates and Flutter requests are normalized into the same internal request envelope before becoming DDS parameter set/get/list calls",
+        "Flutter-originated requests override AWS IoT Shadow-originated requests if both touch the same parameter in a conflict window; the conflict window and audit behavior are documented",
+        "Accepted parameter changes are sent to the DDS parameter service from VSN-0008 and reported back to AWS IoT as reported shadow state when the source was AWS",
+        "Rejected or timed-out parameter changes include a reason and do not update AWS reported state as if accepted",
+        "Operational controls such as drive state use explicit DDS command request/reply APIs, not generic parameter writes",
+        "The bridge streams authoritative DDS ParameterState, ParameterEvent, and selected vehicle state topics back to Flutter with bounded queues and stale-data behavior",
+        "Credentials, certificates, endpoints, and Flutter authorization material are supplied outside version control",
+        "Tests cover Flutter request flow, AWS shadow desired/reported flow, Flutter-over-AWS conflict precedence, rejected DDS replies, timeouts, reconnect behavior, and shutdown"
+      ],
+      "verification_commands": [
+        "./init.sh verify",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "Application bridge integration tests with fake Flutter and fake AWS IoT Shadow clients"
+      ],
+      "evidence": [
+        "2026-06-15: User clarified that parameters are to be changed by an application bridge, and that the bridge talks to AWS IoT Device Shadows or the Flutter infotainment app",
+        "2026-06-15: User clarified race policy: Flutter overrides AWS IoT when both touch the same parameter, although that should be uncommon",
+        "2026-06-15: AWS IoT Device Shadow docs confirm desired/reported/delta state synchronization; shadows are appropriate for remote desired configuration and reported accepted state, not arbitrary per-node MQTT threads"
+      ],
+      "dependencies": [
+        "VSN-0008"
+      ],
+      "blockers": [
+        "The concrete Flutter transport and authentication mechanism are not yet selected",
+        "AWS IoT thing naming, shadow naming, certificate provisioning, and allowed remotely mutable parameter list need approval"
+      ],
+      "notes": "Keep the bridge as the external API boundary. It can serve both local infotainment and cloud ingress, but DDS nodes remain DDS-only."
+    },
+    {
+      "id": "VSN-0012",
+      "priority": 1,
+      "area": "telemetry-integration",
+      "title": "Create CAN-to-IoT and DDS-to-IoTCore bridge nodes",
+      "desired_outcome": "SR-Mjolnir has dedicated bridge nodes for cloud telemetry: one node decodes approved raw CAN gateway frames into typed telemetry where appropriate, and one DDS-to-IoTCore bridge exports approved DDS topics to AWS IoT Core MQTT with bounded low-overhead behavior.",
+      "status": "not_started",
+      "plan_path": "docs/exec-plans/active/15-06-26_iot_bridge_nodes.md",
+      "acceptance_criteria": [
+        "Implementation starts from a branch created off origin/ryan/feat/cmake_update/qnx_support",
+        "Before implementation, the current CAN gateway contract and CAN-facing nodes are read and summarized, including raw CAN DDS frame types, /can<bus>/from_can_bus, /can<bus>/to_can_bus, and current per-node CAN ID filtering",
+        "Before implementation, the ROS2-era EMBD-v2-HighLevel iotcore_bridge is read and only appropriate ideas are ported; ROS2-specific parameter/client behavior and checked-in certificate assumptions are not copied",
+        "The CAN-to-IoT node subscribes to approved /can<bus>/from_can_bus raw CAN DDS topics, filters by explicit CAN ID allowlist, unpacks 8-byte payloads through named functions such as unpack_0x200(), and emits typed structs or typed DDS telemetry topics with units and stale-data policy",
+        "Closed-control-system data such as IBSE or motor feedback is evaluated per signal: route through DDS first when local consumers, infotainment, diagnostics, control, recording, or reuse need it; otherwise document why a direct cloud-only path is acceptable",
+        "The DDS-to-IoTCore bridge subscribes only to an explicit allowlist of DDS telemetry/status topics and converts them to compact MQTT payloads for AWS IoT Core",
+        "High-rate telemetry defaults to best-effort/latest-value DDS reads, bounded queues, batching or downsampling, and AWS IoT MQTT QoS 0 unless the signal is an event/fault requiring QoS 1",
+        "Faults, alerts, and operator-relevant events have a separate mapping from high-rate numeric telemetry and may use QoS 1 with retry/backoff",
+        "The bridge does not publish raw high-rate telemetry into AWS Device Shadows; shadows are reserved for state/config handled by VSN-0011",
+        "MQTT endpoint, topic namespace, certificates, private keys, and AWS account details are supplied through deployment configuration and are not stored in the repository",
+        "Tests cover CAN ID filtering, unpack functions, typed telemetry conversion, DDS allowlist export, MQTT payload formation, queue overflow, reconnect/backoff, and shutdown",
+        "Documentation records the telemetry mapping table, per-signal DDS-versus-direct decision, rates, units, QoS, and expected AWS IoT Core topic names"
+      ],
+      "verification_commands": [
+        "./init.sh verify",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "Focused bridge tests with fake CAN frames, fake DDS readers/writers, and fake MQTT publisher"
+      ],
+      "evidence": [
+        "2026-06-15: SR-Mjolnir architecture and topic registry showed the raw CAN gateway model: raw SRFDCanFrame samples flow from CAN hardware to bus-specific DDS topics, and CAN-facing nodes filter CAN IDs and unpack only frames they own",
+        "2026-06-20: EVSN canonical CAN gateway topic defaults now copy EMBD-v2-HighLevel's bus-first convention: /can<bus>/from_can_bus and /can<bus>/to_can_bus",
+        "2026-06-15: core/dds_types/std_types/sr_fdcan/sr_fdcan.idl defines SRFDCanFrame with id and bounded octet data payload",
+        "2026-06-15: EMBD-v2-HighLevel contains a ROS2 iotcore_bridge that caches selected telemetry, skips duplicates, chunks reports, publishes to AWS IoT Core MQTT, and accepts legacy remote limit/parameter messages; the new implementation must port only applicable telemetry/export patterns",
+        "2026-06-15: AWS IoT MQTT docs confirm QoS 0 and QoS 1 support; Device Shadows are documented as desired/reported state stores and should not be used as the high-rate telemetry path"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002",
+        "VSN-0005"
+      ],
+      "blockers": [
+        "Approved CAN IDs, DBC/payload layouts, units, rates, and bus mappings for IBSE, motors, BMS, and other closed systems are not all recorded in SR-Mjolnir",
+        "AWS IoT Core endpoint, topic namespace, certificate provisioning, and deployment target need approval",
+        "QNX MQTT development/runtime package availability must be confirmed for production QNX builds"
+      ],
+      "notes": "This is telemetry export, not parameter control. Keep cloud export in bridge nodes and keep ordinary vehicle-control nodes free of MQTT."
+    },
+    {
+      "id": "VSN-0013",
+      "priority": 1,
+      "area": "middleware-integration",
+      "title": "Implement CAN 2.0 support for mixed CAN buses",
+      "desired_outcome": "SR-Mjolnir has an explicit DDS contract for CAN 2.0-only bus topics while preserving SRFDCanFrame for FD-capable bus topics.",
+      "status": "blocked",
+      "plan_path": "docs/exec-plans/active/18-06-26_can-20-support.md",
+      "acceptance_criteria": [
+        "SRCan20Frame IDL exists with explicit standard/extended ID, remote-frame, DLC, and 8-byte bounded payload fields",
+        "RTI Connext C++ type support is generated from the approved rtiddsgen flow and builds in std_types",
+        "Topic registry and architecture docs state that each concrete CAN bus topic has one DDS type selected by bus capability",
+        "Host tests cover SRCan20Frame field behavior and CAN 2.0 validation once generated type support is available"
+      ],
+      "verification_commands": [
+        "./scripts/linux-test --clean",
+        "VERIFY_QNX=1 ./init.sh verify"
+      ],
+      "evidence": [
+        "2026-06-18: researcher: reviewed active CAN 2.0 plan, existing SRFDCanFrame IDL, std_types build pattern, topic registry, CAN gateway plan, QNX resource-manager assumptions, and local harness rules",
+        "2026-06-18: implementer: created feature/can-20-support branch from the existing dirty feature/henry/can-drivers worktree",
+        "2026-06-18: implementer: added SRCan20Frame IDL source; generated C++ type support was initially blocked because host rtiddsgen was unavailable and Docker Desktop hung before the builder could be reached",
+        "2026-06-18: implementer: generated sr_can20 C++11 type support with rtiddsgen 4.3.1 from the repository QNX builder",
+        "2026-06-18: verifier: ./scripts/linux-test --clean passed clean Linux build/install and all 10 CTest tests including sr_can20_frame_test",
+        "2026-06-18: verifier: ./harness/verify.sh passed 13 work items, links in 293 Markdown files, clean Linux build/install, and all 10 CTest tests",
+        "2026-06-18: verifier: ./scripts/qnx-build passed and compiled sr_can20 generated sources for armv8QNX8.0qcc_cxx12.2.0"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002"
+      ],
+      "blockers": [
+        "CAN gateway implementation package is not present yet, so gateway conversion tests must land with or after the gateway work item",
+        "TD4 AM69/TI QNX CAN-FD headers and libraries are not yet available"
+      ],
+      "notes": "Do not hand-maintain generated RTI type-support files unless maintainers explicitly approve a regeneration workaround. Keep concrete /can<bus>/from_can_bus and /can<bus>/to_can_bus topic types fixed per deployment unless a later interface plan explicitly changes them."
+    },
+    {
+      "id": "VSN-0014",
+      "priority": 2,
+      "area": "governance",
+      "title": "Document proprietary repository license",
+      "desired_outcome": "Repository consumers see a clear private, all-rights-reserved license requiring express written permission before any use.",
+      "status": "in_progress",
+      "plan_path": null,
+      "acceptance_criteria": [
+        "A root license file states that the repository is proprietary and confidential",
+        "The license forbids use, copying, modification, distribution, deployment, and derivative works without express prior written permission",
+        "The README points readers to the repository license"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Added root LICENSE, README license notice, and durable log .agents/logs/2026-06-20-private-license.md",
+        "2026-06-20: ./init.sh check passed, validating 14 work items and links in 70 Markdown files",
+        "2026-06-20: git diff --check passed"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "notes": "Documentation-only governance change. Touched files: LICENSE, README.md, .agents/feature_list.json, .agents/logs/2026-06-20-private-license.md. Next action: legal owner may replace EVSN Project Authors with a formal legal entity if needed."
+    },
+    {
+      "id": "VSN-0015",
+      "priority": 1,
+      "area": "runtime-middleware",
+      "title": "Review and rewrite EVSNNode runtime for deterministic QNX DDS",
+      "desired_outcome": "EVSNNode has an original, evidence-backed QNX/RTI execution model with bounded steady-state behavior, documented DDS contracts, preserved node API compatibility where practical, and verification suitable for future safety evidence.",
+      "status": "passing",
+      "plan_path": ".agents/exec_plans/evsn-node-review-rewrite.md",
+      "acceptance_criteria": [
+        "RTI Connext MCP guidance is recorded before DDS design decisions or source implementation begin",
+        "Current QNX online documentation is recorded before QNX-facing runtime behavior is reviewed or changed",
+        "The existing EVSNNode API and runtime behavior are inventoried with explicit migration notes for any deliberate incompatibility",
+        "The copied or ported core EVSNNode implementation is replaced by a newly designed internal architecture rather than a superficial rename or mechanical rewrite",
+        "Any retained names, file paths, public API shapes, or code blocks are justified as compatibility, generated/vendor code, or unavoidable RTI/QNX API usage",
+        "Runtime-created DDS topics and services document type, keying, QoS, deadline, liveliness, durability, resource limits, stale-data behavior, and restart behavior",
+        "The rewritten runtime separates initialization from steady-state spin behavior and avoids dynamic allocation in the steady-state path unless an approved exception is recorded",
+        "Fallible QNX/POSIX/HAM calls in touched code are checked and have documented failure behavior",
+        "Focused tests cover timer dispatch, DDS WaitSet dispatch, parameter request/reply, state/event publishing, shutdown, and QNX HAM heartbeat behavior"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "./scripts/linux-test --clean",
+        "./scripts/test-no-evsnnode-mqtt",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "QNX target or QEMU HAM smoke test for attach, heartbeat, missed-heartbeat behavior, restart, and detach"
+      ],
+      "evidence": [
+        "2026-06-20: Created execution plan .agents/exec_plans/evsn-node-review-rewrite.md using harness-creator, qnx-cpp-rtos, qnx-cpp-performance, and rti-connext-dds guidance",
+        "2026-06-20: Loaded current EVSNNode runtime files under evsn-runtime/evsn_node and recorded review/rewrite checkpoints in the execution plan",
+        "2026-06-20: QNX Product Documentation and QNX SDP 8.0 documentation index were consulted for the planning gate",
+        "2026-06-20: RTI Connext MCP was not available in this Codex session; tool discovery exposed no RTI Connext MCP or install candidate",
+        "2026-06-20: ./init.sh check passed for the planning artifacts, validating 15 work items and links in 72 Markdown files",
+        "2026-06-20: git diff --check passed",
+        "2026-06-20: Updated the execution plan to require a full original rewrite of copied/ported EVSNNode internals, source-provenance review, and justification for any retained public API or code",
+        "2026-06-20: ./init.sh check and git diff --check passed after the originality-boundary update",
+        "2026-06-20: Rechecked requested rewrite after docker/.env setup; RTI Connext MCP remains unavailable through tool discovery and plugin install candidates, so DDS/runtime source implementation remains blocked",
+        "2026-06-20: Docker builder preflight found docker/.env present but DEV_ENV_BUILDER_IMAGE missing; current variable key is QNX_BUILD_IMAGE",
+        "2026-06-20: RTI Connext MCP became callable as mcp__rti_connext; recorded guidance for WaitSet ownership, LoanedSamples lifetime, AnyDataWriter/AnyDataReader use, parameter request/reply, QoS classes, ReplierParams, and HAM restart rediscovery",
+        "2026-06-20: Current QNX SDP 8.0 online docs were recorded for HAM attach/heartbeat/conditions/actions, timing, scheduling, signal waiting, and trace instrumentation",
+        "2026-06-20: Rewrote EVSNNode internals around typed subscription records, owned StatusConditions, bounded topic validation, bounded spin waits, explicit timer catch-up, and lexical LoanedSamples handling while preserving the public node API",
+        "2026-06-20: Added explicit parameter state/event/request/reply QoS resource limits and switched parameter Replier construction to rti::request::ReplierParams",
+        "2026-06-20: Tightened QNX HAM backend environment parsing and /proc/self/exefile failure handling",
+        "2026-06-20: ./scripts/linux-test --clean passed a clean container build and all 4 CTest tests",
+        "2026-06-20: VERIFY_QNX=1 ./init.sh verify passed harness check, Linux build/tests, and QNX cross-build for armv8QNX8.0qcc_cxx12.2.0 including qnx_ham_node_supervisor.cpp and libevsn_node.a",
+        "2026-06-20: Final git diff --check, ./scripts/test-no-evsnnode-mqtt, python3 -m json.tool .agents/feature_list.json, and ./init.sh check passed after evidence updates",
+        "2026-06-20: Added QNX-only qnx_evsn_node_ham_smoke executable linked through evsn_node and installed under out/qnx/bin through the repository QNX CMake path",
+        "2026-06-20: ./scripts/evsn build --target qnx_evsn_node_ham_smoke passed for armv8QNX8.0qcc_cxx12.2.0 and installed an AArch64 QNX executable with BuildID 286fb2f59b41866864f9e76d8ecbcbba",
+        "2026-06-20: Booted /Users/henryjiang/qnxprojects/targets/qemu-qnx800-aarch64, staged AArch64 HAM from the QNX SDP target image, and ran qnx_evsn_node_ham_smoke over SSH on localhost:2222",
+        "2026-06-20: QNX QEMU clean smoke produced attached, first_tick, alive, detached, timing markers and a non-empty QNX tracelogger capture copied to .agents/evidence/VSN-0015-qnx-ham/evsn_node_trace.kev",
+        "2026-06-20: QNX QEMU stall smoke produced stalling, resumed, high-action, alive, detached markers and timing with max_interval_us=3599988 for missed-heartbeat evidence",
+        "2026-06-20: QNX QEMU death smoke exited initial process with status 137, HAM restarted the repository-linked smoke binary in restarted mode, and produced restarting, restarted, detached, and timing markers",
+        "2026-06-20: Final python3 -m json.tool .agents/feature_list.json, git diff --check, ./scripts/test-no-evsnnode-mqtt, ./init.sh check, ./scripts/linux-test --clean, and VERIFY_QNX=1 ./init.sh verify passed after QNX target evidence updates"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002",
+        "VSN-0005"
+      ],
+      "blockers": [],
+      "notes": "Source implementation, local Linux/QNX build verification, and QNX QEMU HAM runtime smoke evidence are complete. Touched files include evsn-runtime/evsn_node/evsn_node.hpp, evsn_node.cpp, parameter_service.cpp, qnx_ham_node_supervisor.cpp, CMakeLists.txt, README.md, test/evsn_node_supervision_test.cpp, test/qnx_evsn_node_ham_smoke.cpp, .agents/evidence/VSN-0015-qnx-ham/, and active harness evidence files. The checkout still reports no HEAD commit, so normal feature-branch setup remains a repository state issue rather than a VSN-0015 runtime blocker."
+    },
+    {
+      "id": "VSN-0016",
+      "priority": 1,
+      "area": "qnx-build",
+      "title": "Implement repo-local EVSN QNX build CLI",
+      "desired_outcome": "Developers can use ./scripts/evsn as the single repo-local QNX build, diagnostics, clean, shell, compile-command, and verification entrypoint without a marker file or global install.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-qnx-build-cli.md",
+      "acceptance_criteria": [
+        "The CLI is callable as ./scripts/evsn and names the tool EVSN",
+        "Repo discovery is structural and does not require .sunswift-evsn or any replacement marker file",
+        "Build planning uses Docker, CMake, Ninja, the QNX toolchain file, BUILD_TESTING=OFF, QNX AArch64 compiler checks, RTI QNX library checks, and QNX artifact refusal checks",
+        "doctor, build, clean, shell, compile-commands, and verify commands are implemented with dry-run support where appropriate",
+        "Legacy scripts/qnx-build, scripts/qnx-clean, scripts/qnx-shell, and scripts/qnx-compile-commands delegate to the EVSN CLI",
+        "Parser, root discovery, Docker command planning, and clean path guards have focused unit tests",
+        "Live QNX build produces out/qnx artifacts and compile commands once docker/.env points at a licensed builder image"
+      ],
+      "verification_commands": [
+        "python3 -m py_compile tools/evsn_cli/*.py",
+        "python3 -m unittest discover -s tests/evsn_cli",
+        "bash -n init.sh scripts/*",
+        "./scripts/evsn help",
+        "./scripts/evsn doctor --offline",
+        "./scripts/evsn build --dry-run --target evsn_node",
+        "./scripts/evsn build --target evsn_node",
+        "VERIFY_QNX=1 ./init.sh verify"
+      ],
+      "evidence": [
+        "2026-06-20: Added Python stdlib EVSN CLI under tools/evsn_cli and Bash entrypoint scripts/evsn",
+        "2026-06-20: Updated scripts/qnx-build, scripts/qnx-clean, scripts/qnx-shell, and scripts/qnx-compile-commands to delegate to ./scripts/evsn",
+        "2026-06-20: Added tests/evsn_cli/test_cli.py covering structural root discovery, target normalization, Docker command planning, dry-run output, doctor offline, and clean guards",
+        "2026-06-20: README documents ./scripts/evsn as the preferred QNX CLI entrypoint and keeps legacy qnx-* wrappers as delegated compatibility wrappers",
+        "2026-06-20: python3 -m py_compile tools/evsn_cli/*.py passed",
+        "2026-06-20: python3 -m unittest discover -s tests/evsn_cli passed with 14 tests",
+        "2026-06-20: bash -n init.sh scripts/* passed",
+        "2026-06-20: ./scripts/evsn help, doctor --offline, build --dry-run --target evsn_node, compile-commands --dry-run, shell --dry-run, and verify --dry-run --target evsn_node passed",
+        "2026-06-20: ./scripts/qnx-build --dry-run target evsn_node, ./scripts/qnx-compile-commands --dry-run, and ./scripts/qnx-shell --dry-run passed",
+        "2026-06-20: Forbidden legacy-name scan over tools, scripts/evsn, tests, and README.md returned no matches",
+        "2026-06-20: ./init.sh check passed, validating 17 work items and links in 75 Markdown files",
+        "2026-06-20: git diff --check passed",
+        "2026-06-20: Exact-line audit compared 9 EVSN build-tool files against 7 S130 tool files and found 84 exact shared nonblank stripped lines, 0 substantive copied-line candidates after filtering boilerplate/generic CLI lines, and a longest contiguous shared block of 2 generic lines",
+        "2026-06-20: No-context subagent 019ee122-cea6-7091-9d1a-57c291620580 reviewed S130 CLI A versus EVSN CLI B, reported generic overlap only with low substantive implementation overlap, and judged EVSN stronger for QNX build orchestration",
+        "2026-06-20: Fixed reviewer-flagged RTI architecture filter from QNX|QOS to case-insensitive qnx|nto and added unit coverage"
+      ],
+      "dependencies": [
+        "VSN-0002"
+      ],
+      "blockers": [
+        "docker/.env is present but does not define DEV_ENV_BUILDER_IMAGE, so ./scripts/evsn build --target evsn_node cannot start the licensed Docker QNX builder",
+        "Live QNX artifact verification and VERIFY_QNX=1 ./init.sh verify remain pending until docker/.env or the environment defines DEV_ENV_BUILDER_IMAGE"
+      ],
+      "notes": "Implementation is present and offline/dry-run verified. Next action: set DEV_ENV_BUILDER_IMAGE in docker/.env or the environment, then run ./scripts/evsn build --target evsn_node and VERIFY_QNX=1 ./init.sh verify."
+    },
+    {
+      "id": "VSN-0017",
+      "priority": 1,
+      "area": "middleware-integration",
+      "title": "Implement deterministic EVSN CAN gateway",
+      "desired_outcome": "EVSN has a bounded QNX CAN gateway process that bridges configured QNX CAN resource-manager endpoints to raw RTI Connext DDS CAN topics without moving DBC pack/unpack logic into the gateway.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-can-gateway.md",
+      "acceptance_criteria": [
+        "The gateway package builds in Linux test mode with the CAN HAL fake backend and in QNX mode with a HAL-selected CAN backend",
+        "One process instance owns exactly one configured CAN bus and bridges RX to /can<bus>/from_can_bus and /can<bus>/to_can_bus to TX by default",
+        "Default topic-name tests cover bus index, bus name, /can<bus>/from_can_bus, /can<bus>/to_can_bus, and explicit topic overrides",
+        "CAN 2.0 topics use EVSNCan20Frame and FD-capable topics use EVSNFDCanFrame only where current metadata limits are acceptable or explicitly resolved",
+        "DDS callbacks never perform hardware I/O and enqueue outbound frames through a fixed-capacity TX queue",
+        "Queue pressure uses same-ID replacement where possible and otherwise drops with diagnostic counters instead of unbounded allocation or blocking",
+        "QNX/POSIX open, close, and devctl calls are checked with documented startup, steady-state, and shutdown behavior",
+        "Conversion tests cover standard IDs, extended IDs, invalid IDs, payload length limits, DLC validation, remote-frame handling, and unsupported FD metadata",
+        "Linux fake-CAN DDS integration tests verify inbound publishing and outbound transmit flow on isolated DDS domains",
+        "QNX/SIL or target evidence verifies raw-frame RX/TX with dev-can-linux, cansend, and candump before live vehicle use",
+        "Gateway documentation states that DBC pack/unpack belongs with CAN-ID-owning nodes, not with the gateway"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "./scripts/linux-test --clean",
+        "focused CTest for CAN gateway conversion and queue tests",
+        "Linux fake-CAN DDS integration test for /can<bus>/from_can_bus and /can<bus>/to_can_bus",
+        "./scripts/evsn build --target can_gateway",
+        "VERIFY_QNX=1 ./init.sh verify",
+        "QNX/SIL smoke with dev-can-linux -L 1, cansend, and candump"
+      ],
+      "evidence": [
+        "2026-06-20: Created execution plan .agents/exec_plans/evsn-can-gateway.md from current EVSN runtime layout, CAN DDS IDL, SR-Mjolnir local repo plans, and local chat history",
+        "2026-06-20: Current EVSN CAN DDS contracts are EVSNFDCanFrame with id plus bounded 64-byte data and EVSNCan20Frame with id, extended_id, remote_frame, dlc, and bounded 8-byte data",
+        "2026-06-20: Local Codex chat history confirmed the raw gateway model: hardware frame to a bus-specific raw CAN topic, node-local CAN-ID filtering and DBC unpack, node-local DBC pack to a bus-specific TX topic",
+        "2026-06-20: SR-Mjolnir CAN gateway and CAN 2.0 plans provided the one-bus-per-process gateway shape, QNX endpoint model, no-DBC gateway boundary, bounded TX queue policy, and QNX shim requirement",
+        "2026-06-20: EMBD-v2-HighLevel ros2_socketcan and can_broker sources confirmed bus-first topic defaults /can0/from_can_bus and /can0/to_can_bus, with equivalent /can1/... names by bus namespace",
+        "2026-06-20: dev-can-linux commands.h and README confirmed raw struct can_msg helpers, /dev/can0/rx0 and /dev/can0/tx0 endpoints, standard MID bits 18-28, extended MID bits 0-28, and SIL-only 64-byte raw-frame evidence",
+        "2026-06-20: QNX Product Documentation and QNX SDP 8.0 docs were consulted for CAN raw-frame devctl commands, nonblocking receive, raw transmit, MID encoding, devctl errors, and resource-manager behavior",
+        "2026-06-20: RTI Connext MCP guidance for the topic-name update reported no DDS-specific blocker; the rename is a breaking system contract change requiring exact new topic-name match, compatible types, compatible QoS, no required partitions, and configurable topic names",
+        "2026-06-20: RTI Connext MCP guidance query for the CAN gateway timed out after approximately 120 seconds, so source implementation and final DDS QoS decisions are blocked until guidance is recorded",
+        "2026-06-20: ./init.sh check passed after the EMBD-v2 topic-name update, validating 17 work items and links in 75 Markdown files",
+        "2026-06-20: git diff --check passed after the EMBD-v2 topic-name update",
+        "2026-06-20: Added VSN-0019 as the target-selectable CAN HAL plan so vcan/dev-can-linux, generic QNX raw devctl, and future TDA4 FD-CAN headers/libraries stay private to backend targets"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0013",
+        "VSN-0015",
+        "VSN-0019"
+      ],
+      "blockers": [
+        "RTI Connext MCP guidance timed out, and the harness requires successful MCP guidance before RTI Connext DDS design or implementation work",
+        "docker/.env is not configured, so live QNX build and QNX verification cannot run in this checkout",
+        "EVSNFDCanFrame lacks extended_id, remote_frame, and explicit DLC fields, so FD metadata behavior must be restricted or the DDS contract must be changed before accepting those combinations",
+        "QNX target endpoint names, bitrate setup, latency-limit support, and physical CAN-FD hardware behavior need target evidence before live vehicle use"
+      ],
+      "notes": "Planning artifact only. Canonical default CAN gateway topics now copy EMBD-v2-HighLevel: /can<bus>/from_can_bus and /can<bus>/to_can_bus, while remaining configurable. VSN-0019 now owns the target-selectable CAN HAL plan; gateway implementation should consume evsn_can_hal instead of including QNX, dev-can-linux, or future TDA4 CAN headers directly. Touched files: .agents/exec_plans/evsn-can-gateway.md, .agents/exec_plans/evsn-can-abstraction-layer.md, .agents/feature_list.json, .agents/agent-context.md, .agents/logs/2026-06-20-evsn-can-gateway-plan.md, .agents/logs/2026-06-20-evsn-can-abstraction-layer-plan.md, .agents/progress.md. Next action: implement VSN-0019 pure HAL validation and fake backend tests, then rerun the full RTI Connext MCP QoS/lifecycle query successfully before DDS gateway integration."
+    },
+    {
+      "id": "VSN-0018",
+      "priority": 2,
+      "area": "harness",
+      "title": "Use VSN work item identifiers",
+      "desired_outcome": "All durable work items use the S7-EVSN VSN-XXXX identifier format instead of the inherited project namespace.",
+      "status": "passing",
+      "plan_path": null,
+      "acceptance_criteria": [
+        "Existing durable work item IDs and dependency references use VSN-XXXX format",
+        "Harness instructions state that new work items must use VSN-XXXX IDs",
+        "Feature-list validation rejects non-VSN work item IDs",
+        "Harness check and whitespace checks pass after the migration"
+      ],
+      "verification_commands": [
+        "! rg -n '[m]jolnir-[[:digit:]#x]{3}' AGENTS.md .agents init.sh README.md scripts tests tools cmake CMakeLists.txt",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Migrated existing work item IDs and dependency references from the inherited project namespace to VSN-XXXX format",
+        "2026-06-20: Old-ID scan returned no legacy numeric or placeholder work-item ID matches in AGENTS.md, .agents, init.sh, README.md, scripts, tests, tools, cmake, or CMakeLists.txt",
+        "2026-06-20: ./init.sh check passed, validating 18 work items and links in 76 Markdown files",
+        "2026-06-20: git diff --check passed"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "notes": "Harness-only naming migration. Future work items must use uppercase VSN-XXXX format such as VSN-0019."
+    },
+    {
+      "id": "VSN-0019",
+      "priority": 1,
+      "area": "middleware-integration",
+      "title": "Add target-selectable CAN abstraction layer",
+      "desired_outcome": "EVSN CAN gateway code can build against a fake Linux test backend, QNX dev-can-linux/vcan endpoints, generic QNX raw CAN devctl endpoints, and future TDA4 FD-CAN driver headers/libraries without leaking target-specific headers into portable gateway code.",
+      "status": "in_progress",
+      "plan_path": ".agents/exec_plans/evsn-can-abstraction-layer.md",
+      "acceptance_criteria": [
+        "Public CAN HAL headers expose only EVSN portable types and standard C++ headers",
+        "Exactly one CAN backend is selected by CMake for a build through EVSN_CAN_BACKEND",
+        "Linux tests use a fake backend with deterministic injected RX frames, recorded TX frames, and forced error states",
+        "QNX vcan/SIL builds can select a raw devctl backend that works with dev-can-linux /dev/canN/rxM and /dev/canN/txM endpoints",
+        "TDA4 FD-CAN backend configuration fails clearly until required vendor include paths, libraries, architecture, and driver contract are supplied",
+        "HAL validation covers classic and FD lengths, DLC, standard and extended IDs, remote frames, unsupported FD flags, and backend capability mismatches",
+        "No dynamic allocation is required in steady-state read or write paths",
+        "Every fallible backend operation returns an explicit status plus native error context where available",
+        "Verification evidence distinguishes fake unit tests, QNX vcan/SIL tests, and physical TDA4 target tests"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "focused CTest for CAN HAL validation and fake backend tests",
+        "Linux configure/build with EVSN_CAN_BACKEND=fake",
+        "QNX configure/build with EVSN_CAN_BACKEND=qnx-devctl",
+        "QNX/SIL smoke with dev-can-linux -L 1, cansend, and candump",
+        "QNX/SIL smoke with qnx_can_hal_vcan_smoke linked against evsn_can_hal",
+        "TDA4 target smoke with approved FD-CAN headers/libraries and hardware loopback or bench CAN analyzer"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-can-abstraction-layer.md from harness context, VSN-0017 gateway plan, current EVSN CAN DDS type limitations, local vcan-drivers evidence, and QNX SDP 8.0 online documentation",
+        "2026-06-20: QNX online documentation confirmed raw CAN devctl commands, nonblocking RX EAGAIN behavior, TX queue full EAGAIN behavior, and official 8-byte struct can_msg payload shape",
+        "2026-06-20: Local dev-can-linux evidence confirmed /dev/canN/rxM and /dev/canN/txM endpoint conventions, vcan loopback with -L, standard and extended MID handling, and local SIL-only 64-byte raw container behavior",
+        "2026-06-20: python3 -m json.tool .agents/feature_list.json >/dev/null, ./init.sh check, and git diff --check passed after the HAL planning edits",
+        "2026-06-22: researcher subagent 019eeda3-d4c2-7e82-b550-4e0ba3927ce4 confirmed QNX docs evidence exists, dev-can-linux is SIL-only, commands.h is GPL/header-boundary risk, backend defaults matter because build wrappers do not pass EVSN_CAN_BACKEND, and VSN-0019 must not be marked passing without QNX/SIL and TDA4 evidence",
+        "2026-06-22: Implemented evsn-runtime/can_hal with portable CanFrame/CanResult/CanOpenConfig/CanCapabilities/CanDiagnostics/CanChannel API, centralized classic/FD/remote/ID/DLC/capability validation, deterministic fixed-capacity fake backend, EVSN_CAN_BACKEND CMake selection, qnx-devctl raw devctl backend using official QNX headers only, blocked qnx-dev-can-linux and tda4-fdcan selectors, and public boundary tests",
+        "2026-06-22: reviewer subagent 019eedab-5439-7122-b73a-eca8466293be found and the implementation fixed classic/remote FD-flag rejection plus QNX timestamp capability handling; QNX raw backend now does not advertise or synthesize monotonic timestamps from undocumented can_msg timestamp units",
+        "2026-06-22: ./scripts/linux-test passed all 7 CTest tests including can_hal_validation_test, can_hal_fake_backend_test, and can_hal_public_boundary_test with the default fake backend",
+        "2026-06-22: ./scripts/qnx-build --target evsn_can_hal passed with default EVSN_CAN_BACKEND=qnx-devctl, found <sys/can_dcmd.h>, built libevsn_can_hal.a for QNX AArch64, refreshed out/qnx/compile_commands.json, and verified installed QNX executable identity",
+        "2026-06-22: bash evsn-runtime/can_hal/test/check_public_boundary.sh evsn-runtime/can_hal, git diff --check, and ./init.sh check passed; init.sh validated 37 work items and links in 130 Markdown files",
+        "2026-06-22: Built vcan-drivers dev-can-linux, cansend, and candump as QNX AArch64 executables in the dev-env-builder container and copied them to /tmp/evsn-vcan-smoke on /Users/henryjiang/qnxprojects/targets/qemu-qnx800-aarch64",
+        "2026-06-22: QNX/SIL smoke passed on target QNX qnx-a64 8.0.0 2025/07/30-19:17:34EDT QEMU_virt aarch64le; dev-can-linux -L 1 -u id=0,rx=1,tx=1 -b id=0,freq=1000k created /dev/can0/rx0 and /dev/can0/tx0, cansend transmitted 0x124 standard and 0x1234 extended frames, candump observed [SFF] 124 [8] 124#1122334455667788 and [EFF] 1234 [4] 1234#AABBCCDD, and the script exited 0 with driver/dump cleanup",
+        "2026-06-24: Added qnx_can_hal_vcan_smoke, a QNX-only executable linked against evsn_can_hal; ./scripts/qnx-build --target qnx_can_hal_vcan_smoke passed and installed out/qnx/bin/qnx_can_hal_vcan_smoke as a QNX AArch64 executable with backend qnx-devctl",
+        "2026-06-24: QNX/SIL HAL-linked smoke passed on target QNX qnx-a64 8.0.0 2025/07/30-19:17:34EDT QEMU_virt aarch64le; dev-can-linux -L 1 created /dev/can0/rx0 and /dev/can0/tx0, qnx_can_hal_vcan_smoke opened those endpoints through CanChannel, wrote and read standard frame 0x124 payload 1122334455667788 and extended frame 0x1234 payload AABBCCDD, printed diagnostics opens=1 closes=1 rx=2 tx=2, and exited 0"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0002"
+      ],
+      "blockers": [
+        "TDA4 FD-CAN vendor headers, libraries, API contract, license terms, and exact target architecture are not available in this checkout",
+        "Official QNX SDP 8.0 raw CAN documentation exposes an 8-byte struct can_msg payload, so portable FD-CAN support must come from a verified backend-specific API rather than assumption",
+        "Physical TDA4 CAN-FD behavior needs bench or target evidence before production deployment"
+      ],
+      "notes": "Portable HAL, fake backend, CMake backend selection, QNX raw devctl backend, local/QNX build verification, QNX/SIL utility smoke, and QNX/SIL HAL-linked vcan smoke are implemented on branch feature/evsn-can-abstraction-layer. Keep status in_progress until future TDA4 target evidence is captured. This work item remains DDS-free; VSN-0017 DDS gateway integration remains blocked on RTI MCP guidance."
+    },
+    {
+      "id": "VSN-0020",
+      "priority": 1,
+      "area": "planning",
+      "title": "Plan EMBD network package migration",
+      "desired_outcome": "Active EMBD-v2-HighLevel network, driver, controller, telemetry, CAN, motor, and IDL work is split into restartable EVSN execution plans with ignored packages and blockers recorded.",
+      "status": "passing",
+      "plan_path": ".agents/exec_plans/evsn-network-port-roadmap.md",
+      "acceptance_criteria": [
+        "Active packages and explicitly ignored packages are inventoried",
+        "Each active driver/controller group has an execution plan with smoke, unit, and integration test requirements",
+        "A separate strict network regression and integration test-suite work item exists and is referenced by implementation plans",
+        "CAN0 motor-control ownership excludes DDS and the generic CAN gateway from final motor commands",
+        "A hardware-equivalence matrix copied from EMBD-v2-HighLevel launch/config records bus, frame ID, direction, old ROS2 topic names, new QNX process ownership, candidate DDS topic, and regression test ID",
+        "Branding removal and proprietary headlight cloud-exclusion requirements are recorded",
+        "RTI MCP unavailability and QNX online documentation evidence are recorded"
+      ],
+      "verification_commands": [
+        "python3 -m json.tool .agents/feature_list.json >/dev/null",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-network-port-roadmap.md and related per-area execution plans from EMBD-v2-HighLevel inventory, local EVSN runtime contracts, QNX docs, ITTIA references, and user requirements",
+        "2026-06-20: python3 -m json.tool .agents/feature_list.json >/dev/null, ./init.sh check, and git diff --check passed; harness validated 32 work items and links in 115 Markdown files",
+        "2026-06-20: Added strict verification-gate sections to network implementation plans and strengthened VSN-0033 as the separate regression/integration test-suite work item",
+        "2026-06-22: Added unchanged-hardware hardware-equivalence matrix to evsn-network-port-roadmap.md, covering per-bus and per-frame ROS2 source topics, new QNX owners, provisional DDS topics, and REG-HW regression IDs for CAN0, CAN1, CAN2, CAN3, and non-CAN control surfaces",
+        "2026-06-22: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed; harness validated 36 work items and links in 126 Markdown files",
+        "2026-06-22: User confirmed the steering ECU/EPAS actuator motor has been removed; the roadmap now treats CAN1 steering frames 0x290, 0x292, and 0x298 plus /control/steering/angle as retired evidence rather than an MVP equivalence blocker",
+        "2026-06-22: Reviewer subagent 019eed7c-4c11-7592-8cd7-41ed5a9ce327 returned planning-equivalent: no active non-retired EMBD-v2-HighLevel network surface was missing from the EVSN plans, with implementation/verification still blocked by RTI MCP, target timing, protocol, and regression-suite evidence",
+        "2026-06-22: Added launch-file traceability checklist mapping each system_launch.xml surface to an EVSN owner or explicit retirement/optional decision",
+        "2026-06-22: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed after steering ECU retirement, display deferral, and subagent equivalence review updates; harness validated 36 work items and links in 126 Markdown files",
+        "2026-06-22: Changed display treatment: old USB/serial display_driver path remains out of MVP, but driver display itself is shelved to VSN-0037 as a future HDMI Qt/QML frontend to be done last",
+        "2026-06-22: Read-only reviewer subagent 019eed8a-95e4-7243-9e47-afd6d9313bc6 returned core-planning-equivalent after the display deferral change: core network/control functionality is covered at planning level against active EMBD-v2-HighLevel surfaces minus explicitly retired systems",
+        "2026-06-22: Post-reviewer local suite passed: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, stale wording/regression scan, and ./init.sh check; harness validated 37 work items and links in 129 Markdown files"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "notes": "Planning artifact only. Implementation work is tracked by VSN-0021 through VSN-0032 and remains subject to RTI MCP, QNX documentation, target, vendor-SDK, and VSN-0033 regression evidence gates. The hardware-equivalence matrix is the unchanged-hardware compatibility baseline copied from EMBD-v2-HighLevel launch/config. Steering ECU/EPAS frames are now explicitly retired because the actuator motor has been removed."
+    },
+    {
+      "id": "VSN-0021",
+      "priority": 1,
+      "area": "middleware-contracts",
+      "title": "Convert ROS2 messages and topics to EVSN IDL",
+      "desired_outcome": "Active ROS2 message definitions and implicit topics are replaced by bounded EVSN IDL, generated RTI types, and a generic topic registry.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-network-contracts-idl.md",
+      "acceptance_criteria": [
+        "can_msgs, bms_msgs, and cmu_msgs are mapped to EVSN IDL or explicitly retired",
+        "Each field records units, ranges, validity, timestamp/freshness, and stale-data behavior",
+        "Branded topic fragments are replaced with generic EVSN names except BMS terminology",
+        "RTI MCP guidance is recorded before final IDL/QoS/generated-code implementation",
+        "IDL generation, serialization, and compatibility tests pass"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "focused IDL generation/build command",
+        "focused CTest for IDL serialization and compatibility"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-network-contracts-idl.md with ROS2 message inventory and RTI MCP blocker"
+      ],
+      "dependencies": [
+        "VSN-0005",
+        "VSN-0015"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable in this session, and final DDS/IDL/QoS/generated-code design requires RTI MCP guidance"
+      ],
+      "notes": "Use this work item as the contract gate for every migrated driver, controller, telemetry bridge, and body-control package. Deferred display snapshot contracts belong to VSN-0037 and should not enter the MVP IDL set."
+    },
+    {
+      "id": "VSN-0022",
+      "priority": 1,
+      "area": "middleware-integration",
+      "title": "Adapt CAN broker and gateway to EVSN ownership model",
+      "desired_outcome": "The old ROS2 can_broker/socketcan topology is replaced by EVSN CAN HAL/gateway behavior, with generic DDS gateways excluded from CAN0 drive-control TX.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-can-broker-adaptation.md",
+      "acceptance_criteria": [
+        "Generic gateways own only non-CAN0 buses or explicitly read-only CAN0 mirror paths",
+        "CAN0 drive-control TX through the generic gateway is rejected by configuration and tests",
+        "Raw CAN topics remain bus-first and configurable",
+        "Bounded queues isolate DDS callbacks from CAN HAL calls",
+        "Smoke, unit, DDS integration, and QNX/SIL gateway tests are defined and pass"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "focused CAN gateway unit tests",
+        "isolated-domain DDS gateway integration test",
+        "QNX/SIL dev-can-linux smoke"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-can-broker-adaptation.md and updated .agents/agent-context.md with CAN0 command exclusion"
+      ],
+      "dependencies": [
+        "VSN-0017",
+        "VSN-0019",
+        "VSN-0021"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final gateway DDS QoS and lifecycle guidance"
+      ],
+      "notes": "This work item adapts the old can_broker concept to the current EVSN raw CAN gateway design rather than preserving the ROS2 broker architecture."
+    },
+    {
+      "id": "VSN-0023",
+      "priority": 1,
+      "area": "vehicle-control",
+      "title": "Implement QNX motor-control critical path",
+      "desired_outcome": "A dedicated QNX real-time motor-control process computes final motor commands and hands them to a separate real-time CAN0 drive-control bus owner for transmission, without DDS or generic gateway routing.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-motor-control-critical-path.md",
+      "acceptance_criteria": [
+        "CAN0 is documented as the drive-control bus from the EMBD-v2-HighLevel physical architecture diagram",
+        "A separate QNX real-time CAN0 drive-control bus owner process owns CAN0 HAL writes",
+        "Final motor command computation is owned by the motor-control process and handed to the CAN0 drive-control bus owner through bounded QNX-local IPC",
+        "DDS, telemetry, logging, filesystem, database, and cloud work are outside the hot path",
+        "Priority, scheduling policy, runmask, period, deadline, jitter budget, and safe-state policy are documented",
+        "Smoke, unit, integration, fault-injection, and QNX target timing tests are defined and pass"
+      ],
+      "verification_commands": [
+        "pure motor logic unit tests",
+        "fake CAN0 transmit failure and stale-input tests",
+        "isolated DDS status integration tests after RTI gate",
+        "QNX target timing smoke with tracelogger",
+        "./init.sh check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-motor-control-critical-path.md from user CAN0 ownership requirements and QNX real-time guidance",
+        "2026-06-21: Corrected CAN0 to the drive-control bus from the EMBD-v2-HighLevel physical architecture diagram; motor control computes final commands while evsn_can0_drive_bus_rt owns CAN0 HAL writes",
+        "2026-06-21: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, stale CAN0 motor-only wording search, and ./init.sh check passed; harness validated 36 work items and links in 125 Markdown files"
+      ],
+      "dependencies": [
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0019",
+        "VSN-0021"
+      ],
+      "blockers": [
+        "Control period, priority, runmask, deadline, jitter budget, and target CPU allocation require project approval before implementation",
+        "RTI Connext MCP is unavailable for any DDS status/telemetry contract attached to this process"
+      ],
+      "notes": "This supersedes older DDS-routed motor command assumptions while preserving CAN0 as the shared drive-control bus. The generic CAN gateway still cannot own CAN0 TX."
+    },
+    {
+      "id": "VSN-0024",
+      "priority": 1,
+      "area": "vehicle-interface",
+      "title": "Port Orion 2 BMS driver",
+      "desired_outcome": "The Orion 2 BMS driver decodes CAN IDs 0x620 through 0x629 and publishes typed EVSN BMS DDS outputs with deterministic tests.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-orion2-bms-driver-port.md",
+      "acceptance_criteria": [
+        "BMS ROS2 messages are replaced by EVSN BMS IDL while keeping BMS naming",
+        "Decode logic is pure and checks CAN ID, extended-frame flag, DLC, and payload bounds",
+        "Typed BMS outputs include validity/freshness and diagnostics",
+        "Smoke, unit, and DDS integration tests pass"
+      ],
+      "verification_commands": [
+        "orion2 BMS unit tests",
+        "orion2 BMS DDS integration test",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-orion2-bms-driver-port.md",
+        "2026-06-22: Corrected stale BMS desired_outcome summary to 0x620 through 0x629 so it matches the hardware-equivalence matrix and regression frame set"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0022"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation"
+      ],
+      "notes": "Do not port Lithbal or Elithion BMS paths."
+    },
+    {
+      "id": "VSN-0025",
+      "priority": 1,
+      "area": "vehicle-interface",
+      "title": "Port pedal and steerwheel input drivers",
+      "desired_outcome": "Pedal and steerwheel CAN input drivers publish typed EVSN input states for controllers and the motor-control snapshot path.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-input-drivers-port.md",
+      "acceptance_criteria": [
+        "Pedal decode/calibration/disconnect logic is pure and unit tested",
+        "Steerwheel bitfield, gear, mode, regen, and button decode logic is pure and unit tested",
+        "Remote-driving paths are absent",
+        "Typed DDS input state contracts replace old scalar topics",
+        "Smoke and DDS integration tests pass"
+      ],
+      "verification_commands": [
+        "pedal driver unit tests",
+        "steerwheel driver unit tests",
+        "input driver DDS integration tests",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-input-drivers-port.md"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0022",
+        "VSN-0023"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation"
+      ],
+      "notes": "Pedal state is an input snapshot only; it must not own the CAN0 motor command path."
+    },
+    {
+      "id": "VSN-0026",
+      "priority": 2,
+      "area": "vehicle-interface",
+      "title": "Port lighting drivers",
+      "desired_outcome": "Proprietary headlight, indicator, and taillight drivers use typed EVSN contracts, local CAN packing, and protected proprietary headlight artifacts while the old USB/serial display path stays absent and HDMI Qt display remains deferred.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-display-lighting-drivers-port.md",
+      "acceptance_criteria": [
+        "Headlight docs and proprietary Audi generated code remain local-only and are excluded from public cloud artifacts",
+        "Indicators publish left/right raw CAN frames for IDs 0x18D and 0x18E",
+        "Taillights publish raw CAN ID 0x18B with tested bit mapping",
+        "Centre-display and old USB/serial display_driver output paths are not reintroduced",
+        "HDMI Qt driver display work is not added here and remains deferred to VSN-0037",
+        "Smoke, unit, integration, and proprietary-artifact policy tests pass"
+      ],
+      "verification_commands": [
+        "lighting unit tests",
+        "headlight proprietary helper unit tests",
+        "lighting DDS-to-raw-CAN integration test",
+        "public cloud artifact policy scan",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-display-lighting-drivers-port.md",
+        "2026-06-22: Removed the old USB/serial display_driver output path from MVP scope; VSN-0026 now ports active lighting drivers only and requires regression scans proving display paths are absent",
+        "2026-06-22: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed after lighting-only scope update",
+        "2026-06-22: Clarified that VSN-0026 remains lighting-only; future HDMI Qt driver display is shelved to VSN-0037"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0022",
+        "VSN-0030"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation",
+        "Proprietary Audi headlight material needs confirmed local-only repository and artifact policy before code import"
+      ],
+      "notes": "Do not port horn_driver, centre_display, or the old USB/serial display_driver output path. Future HDMI Qt display work belongs to VSN-0037 and should be done last."
+    },
+    {
+      "id": "VSN-0027",
+      "priority": 2,
+      "area": "vehicle-interface",
+      "title": "Port sensor and MPPT drivers",
+      "desired_outcome": "Brake pressure, solar current, irradiance, tyre pressure, TPEE MPPT, and Elmar MPPT drivers publish typed EVSN sensor/energy DDS outputs with deterministic tests.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-sensor-mppt-drivers-port.md",
+      "acceptance_criteria": [
+        "Each driver has local CAN-ID filtering and pure decode logic",
+        "Sensor/MPPT output contracts use generic EVSN names with units and freshness",
+        "Suspension driver is not ported",
+        "Smoke, unit, and DDS integration tests exist for each driver"
+      ],
+      "verification_commands": [
+        "sensor and MPPT unit tests",
+        "sensor and MPPT DDS integration tests",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-sensor-mppt-drivers-port.md"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0022"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation"
+      ],
+      "notes": "Includes brake pressure, solar current, irradiance, tyre pressure, TPEE MPPT, and Elmar MPPT."
+    },
+    {
+      "id": "VSN-0028",
+      "priority": 1,
+      "area": "vehicle-control",
+      "title": "Port drive controller",
+      "desired_outcome": "The drive controller computes bounded drive request/status snapshots for the QNX motor-control critical path without owning final motor CAN commands.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-drive-controller-port.md",
+      "acceptance_criteria": [
+        "Remote-driving paths are removed",
+        "Drive limits, modes, gear, BMS CCL, cruise arbitration, and stale inputs are unit tested",
+        "Outputs are typed request/status snapshots, not final CAN0 commands",
+        "Smoke and DDS integration tests pass"
+      ],
+      "verification_commands": [
+        "drive controller unit tests",
+        "drive controller DDS integration test",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-drive-controller-port.md"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0023",
+        "VSN-0024",
+        "VSN-0025"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation"
+      ],
+      "notes": "The QNX motor-control process remains responsible for final motor command computation and CAN0 transmission."
+    },
+    {
+      "id": "VSN-0029",
+      "priority": 2,
+      "area": "vehicle-control",
+      "title": "Port cruise controller",
+      "desired_outcome": "The cruise controller publishes typed generic EVSN cruise request/status snapshots with bounded control behavior and deterministic tests.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-cruise-controller-port.md",
+      "acceptance_criteria": [
+        "BWSC-specific comments and names are removed from new contracts",
+        "PID/smoothing and limit behavior are bounded and unit tested",
+        "Brake, stale, gear, and contradictory input disable behavior is explicit",
+        "Smoke and DDS integration tests pass"
+      ],
+      "verification_commands": [
+        "cruise controller unit tests",
+        "cruise controller DDS integration test",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-cruise-controller-port.md"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0025",
+        "VSN-0028"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation"
+      ],
+      "notes": "Cruise output is advisory/request state for drive control, not final motor CAN command authority."
+    },
+    {
+      "id": "VSN-0030",
+      "priority": 2,
+      "area": "vehicle-control",
+      "title": "Port non-critical body controller",
+      "desired_outcome": "Existing lighting, indicator, headlight, taillight, brake-light, reverse, and hazard behavior is rewritten as generic EVSN body-control logic.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-noncritical-controller-port.md",
+      "acceptance_criteria": [
+        "Horn and firmware update paths are absent",
+        "Lighting and indicator state machines are pure and unit tested",
+        "Typed body-control DDS contracts replace scalar ROS2 topics",
+        "Smoke and DDS integration tests pass"
+      ],
+      "verification_commands": [
+        "non-critical body controller unit tests",
+        "body-control DDS integration test",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-noncritical-controller-port.md"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0025",
+        "VSN-0026",
+        "VSN-0027"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation"
+      ],
+      "notes": "Keep this work off the motor-control real-time thread/core."
+    },
+    {
+      "id": "VSN-0031",
+      "priority": 2,
+      "area": "telemetry",
+      "title": "Port generic energy telemetry to ITTIA DB",
+      "desired_outcome": "The old BWSC energy telemetry logic is rewritten as generic EVSN energy telemetry using ITTIA DB on QNX instead of InfluxDB.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-energy-telemetry-ittia-port.md",
+      "acceptance_criteria": [
+        "InfluxDB dependencies and BWSC/SR/Sunswift naming are removed",
+        "Energy accumulator logic is pure and unit tested",
+        "ITTIA DB adapter has explicit open/schema/read/write/reset/close statuses",
+        "Fake DB integration tests and QNX ITTIA smoke tests are defined"
+      ],
+      "verification_commands": [
+        "energy telemetry unit tests",
+        "fake DB integration tests",
+        "QNX ITTIA DB smoke when SDK is available",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-energy-telemetry-ittia-port.md and consulted ITTIA QNX/product pages"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0027"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS contract implementation",
+        "Local ITTIA DB SDK/API documentation and license/build assumptions are not available in this checkout"
+      ],
+      "notes": "Database writes must remain outside real-time paths."
+    },
+    {
+      "id": "VSN-0032",
+      "priority": 3,
+      "area": "telemetry",
+      "title": "Port generic vehicle cloud telemetry bridge",
+      "desired_outcome": "The old IoTCore bridge becomes a generic allowlisted vehicle-cloud telemetry bridge with branded names and proprietary headlight artifacts excluded.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-cloud-telemetry-bridge-port.md",
+      "acceptance_criteria": [
+        "Branded topic prefixes, thing names, certificate filenames, and bucket/org names are removed",
+        "Cloud publish allowlist is generated from the EVSN topic registry",
+        "No cloud command path can send final motor commands or CAN0 motor TX",
+        "Proprietary Audi headlight files are excluded from cloud payloads and public artifacts",
+        "Fake cloud smoke, unit, and DDS-to-cloud integration tests pass"
+      ],
+      "verification_commands": [
+        "cloud bridge unit tests",
+        "DDS-to-fake-cloud integration tests",
+        "branding and proprietary artifact scans",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-cloud-telemetry-bridge-port.md",
+        "2026-06-22: Hardened the cloud bridge plan to explicitly reject old cloud-originated motor reset, motor power, motor limit, torque/current/velocity, drive-enable, and CAN0 command requests unless a future approved command-authority plan exists"
+      ],
+      "dependencies": [
+        "VSN-0021",
+        "VSN-0031"
+      ],
+      "blockers": [
+        "RTI Connext MCP is unavailable for final DDS subscription/QoS implementation",
+        "Cloud deployment contract, credentials, topic prefix, and secret paths must be supplied outside source control"
+      ],
+      "notes": "MQTT/cloud telemetry is allowed only for vehicle/cloud paths and must not influence the motor-control critical path."
+    },
+    {
+      "id": "VSN-0033",
+      "priority": 1,
+      "area": "testing",
+      "title": "Create network regression and integration test suite",
+      "desired_outcome": "Migrated EVSN network packages are covered by a strict, traceable regression suite for contracts, CAN paths, DDS middleware, adapters, controllers, telemetry, and safety-relevant negative cases.",
+      "status": "in_progress",
+      "plan_path": ".agents/exec_plans/evsn-network-regression-test-suite.md",
+      "acceptance_criteria": [
+        "Fast regression, middleware integration, adapter integration, QNX/SIL, and HIL/manual tiers are defined with explicit labels and commands",
+        "Each migrated network package links smoke, unit, integration, regression, and evidence requirements to this suite before completion",
+        "DDS contract tests cover topic names, IDL/schema, keys, QoS, deadlines, liveliness, stale-data behavior, startup, shutdown, and negative mismatch cases where practical",
+        "CAN, DB, cloud, and motor critical-path integration tests run with fake adapters first and QNX/SIL or target tiers when available",
+        "Regression scenarios cover startup, shutdown, stale data, malformed inputs, reconnects, rejected commands, and prohibited CAN0 motor-command routing",
+        "Hardware-equivalence regression validates every matrix row against launch/config bus assignment, frame IDs, direction, old ROS2 source names, new QNX owner, candidate DDS topic, and explicit regression ID",
+        "Regression scans reject retired ROS2 packages/topics, banned branding, and public/cloud inclusion of proprietary Audi headlight artifacts",
+        "Evidence captures exact commands, platform, target, middleware transport/domain, inputs, outputs, logs/traces, exit status, residual risks, and known gaps"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "fast network regression suite",
+        "DDS isolated-domain integration suite",
+        "fake CAN/DB/cloud adapter integration suite",
+        "QNX/SIL gateway and motor timing smoke when target is available"
+      ],
+      "evidence": [
+        "2026-06-20: Existing plan .agents/exec_plans/evsn-network-regression-test-suite.md was linked into the feature list while creating the RTI Perftest harness plan",
+        "2026-06-20: Strengthened .agents/exec_plans/evsn-network-regression-test-suite.md and network implementation plans with strict smoke/unit/integration/regression evidence requirements",
+        "2026-06-20: python3 -m json.tool .agents/feature_list.json >/dev/null, ./init.sh check, and git diff --check passed; harness validated 34 work items and links in 119 Markdown files",
+        "2026-06-22: Expanded the regression-suite plan with a REG-HW hardware-equivalence tier, launch/config bus-assignment checks, WS22 0x501 golden-frame checks, CAN0 receive-fanout checks, and old-topic/public-contract scans",
+        "2026-06-22: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed; harness validated 36 work items and links in 126 Markdown files",
+        "2026-06-22: Added steering-retirement regression expectation: old steering ECU/EPAS frames 0x290, 0x292, and 0x298 must have no active route, DDS command topic, compatibility shim, or accidental 0x298 TX",
+        "2026-06-22: Added regression requirement to assert the launch-file traceability checklist so every active, commented, or user-retired system_launch.xml surface has exactly one EVSN owner or retirement/optional decision",
+        "2026-06-22: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed after launch-traceability and retirement-regression updates; harness validated 36 work items and links in 126 Markdown files",
+        "2026-06-22: Post-display-deferral reviewer subagent 019eed8a-95e4-7243-9e47-afd6d9313bc6 returned core-planning-equivalent, with residual risk limited to implementation, RTI/QNX gates, timing/HIL evidence, and package regression completion",
+        "2026-06-22: Added negative regression expectations for old cloud-originated motor reset, motor power, motor limit, torque/current/velocity, drive-enable, and final CAN0 command paths unless a future approved command-authority plan exists"
+      ],
+      "dependencies": [
+        "VSN-0005",
+        "VSN-0019",
+        "VSN-0021",
+        "VSN-0022",
+        "VSN-0023",
+        "VSN-0024",
+        "VSN-0025",
+        "VSN-0026",
+        "VSN-0027",
+        "VSN-0028",
+        "VSN-0029",
+        "VSN-0030",
+        "VSN-0031",
+        "VSN-0032",
+        "VSN-0036"
+      ],
+      "blockers": [
+        "RTI Connext MCP remains required before final DDS integration tests can be authoritative for DDS QoS/entity behavior",
+        "QNX/SIL and QNX target regression tiers require configured target contracts, toolchains, and test endpoints",
+        "ITTIA DB and cloud bridge target tests require local SDK/API and credential contracts outside source control"
+      ],
+      "notes": "This item provides the functional and integration regression context that performance characterization must run before, after, or around. It does not replace package-level tests; it composes, audits, and now explicitly verifies unchanged-hardware equivalence against the EMBD-v2-HighLevel launch/config matrix."
+    },
+    {
+      "id": "VSN-0034",
+      "priority": 2,
+      "area": "testing",
+      "title": "Integrate RTI Perftest performance harness",
+      "desired_outcome": "The RTI Perftest repository is pinned, built, and run as a controlled optional performance-characterization harness before, after, or around EVSN regression tests.",
+      "status": "in_progress",
+      "plan_path": ".agents/exec_plans/rtiperftest-regression-harness.md",
+      "acceptance_criteria": [
+        "Upstream RTI Perftest source is introduced through an approved pinned tag, commit, or release archive with license and provenance recorded",
+        "Harness commands build RTI Perftest in the existing RTI/QNX builder environment without modifying production DDS topic, type, or QoS contracts",
+        "The harness supports explicit before, after, both, and off modes around the regression suite, with off or non-gating behavior for ordinary local verification unless a maintainer opts in",
+        "Perftest runs use isolated DDS domains, explicit transports/interfaces, deterministic subscriber-before-publisher startup, bounded runtime, and captured raw output",
+        "Evidence records RTI Perftest version, Connext version, platform, target, architecture, transport, NIC, domain, payload sizes, duration, latency/throughput output, exit status, and baseline comparison status",
+        "Linux builder runs are automated; QNX target runs remain opt-in and require an approved target contract, QNX build, deployment, and cleanup evidence"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "./scripts/rtiperftest-harness --dry-run --phase before",
+        "./scripts/rtiperftest-harness --dry-run --phase after",
+        "EVSN_RTI_PERFTEST_PHASE=after ./scripts/verify",
+        "optional QNX target RTI Perftest smoke when target contract is available"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/rtiperftest-regression-harness.md and .agents/logs/2026-06-20-rtiperftest-regression-harness.md with RTI MCP, RTI Perftest, GitHub, and QNX documentation evidence",
+        "2026-06-20: jq empty .agents/feature_list.json, git diff --check, and ./init.sh check passed after plan creation"
+      ],
+      "dependencies": [
+        "VSN-0001",
+        "VSN-0033"
+      ],
+      "blockers": [],
+      "notes": "The requested rtinetworkperftest source was resolved to RTI's public rticommunity/rtiperftest repository, branded by RTI as RTI Perftest / RTI's Network Performance Benchmarking Tool. Perftest results are performance evidence only, not proof of EVSN functional correctness."
+    },
+    {
+      "id": "VSN-0035",
+      "priority": 1,
+      "area": "vehicle-interface",
+      "title": "Port CANopen PedalBox to QNX",
+      "desired_outcome": "The legacy ROS2 CANopen PedalBox bring-up is replaced by a QNX-native EVSN CANopen PedalBox manager on the CAN0 drive-control bus that reads PedalBox TPDO input, monitors CANopen liveness, and performs PedalBox TX only if legacy/device evidence requires it.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-canopen-pedalbox-qnx-port.md",
+      "acceptance_criteria": [
+        "Implementation option 2 is used with a separate evsn_can0_drive_bus_rt process owning CAN0 HAL writes",
+        "The PedalBox manager never directly opens or writes a CAN0 TX endpoint and can submit only bounded, whitelisted CANopen management requests to evsn_can0_drive_bus_rt if legacy/device evidence requires them",
+        "CANopen stack choice, license, pinned version, provenance, build flags, QNX cross-build evidence, allocation behavior, and adapter boundary are recorded",
+        "QNX implementation uses evsn_can_hal and keeps QNX, CANopen stack, and driver headers out of public EVSN interfaces",
+        "Master node ID 1, PedalBox node ID 5, 500 kbit/s legacy timing, TPDO 0x185, heartbeat, NMT, emergency handling, and EDS/DCF-derived object mapping are documented and tested",
+        "Pedal samples publish EVSNPedalState or an RTI-approved revision with freshness, diagnostics, sample counter, source CAN ID, stale behavior, and bounded shutdown behavior",
+        "Smoke, unit, fake-CANopen-slave integration, QNX/SIL smoke, DDS integration after RTI gate, and network regression tests pass with evidence linked to VSN-0033"
+      ],
+      "verification_commands": [
+        "CANopen stack provenance/license/build audit",
+        "PedalBox pure unit tests",
+        "fake HAL and fake CANopen PedalBox integration tests",
+        "fake CAN0 drive-control bus owner arbitration tests for final motor command priority and optional PedalBox management rejection",
+        "DDS isolated-domain publication test after RTI MCP guidance clears",
+        "QNX/SIL dev-can-linux -L smoke when target or QEMU exists",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-canopen-pedalbox-qnx-port.md and .agents/logs/2026-06-20-evsn-canopen-pedalbox-qnx-port.md with QNX documentation, CANopenNode, and Lely CANopen planning evidence",
+        "2026-06-20: python3 -m json.tool .agents/feature_list.json, git diff --check, and ./init.sh check passed; harness validated 35 work items and links in 121 Markdown files",
+        "2026-06-21: Updated VSN-0035 to select implementation option 2: PedalBox remains on CAN0 and CAN0 TX is owned by a single real-time owner; this was later corrected to the separate evsn_can0_drive_bus_rt drive-control bus owner",
+        "2026-06-21: Corrected option 2 to use a separate evsn_can0_drive_bus_rt process for the CAN0 drive-control bus; PedalBox TX is disabled unless legacy/device evidence requires it",
+        "2026-06-21: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, stale CAN0 motor-only wording search, and ./init.sh check passed; harness validated 36 work items and links in 125 Markdown files",
+        "2026-06-21: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed; harness validated 36 work items and links in 124 Markdown files"
+      ],
+      "dependencies": [
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0019",
+        "VSN-0021",
+        "VSN-0023",
+        "VSN-0025",
+        "VSN-0033"
+      ],
+      "blockers": [
+        "evsn_can0_drive_bus_rt contract, priority, runmask, queue depth, whitelist, rate limits, rejection policy, and timing budget must be approved before implementation",
+        "Physical PedalBox EDS/DCF mapping, byte order, scaling, heartbeat behavior, and SDO/SYNC requirements must be confirmed before implementation",
+        "CANopen stack import strategy must be approved with license, pinned version, provenance, QNX build, and allocation evidence",
+        "RTI Connext MCP guidance is required before final DDS publication, DDS type revision, topic, QoS, or generated-code implementation"
+      ],
+      "notes": "This narrows the PedalBox part of VSN-0025; steerwheel input remains in VSN-0025. The recommended first-pass stack candidate is CANopenNode behind an EVSN-owned adapter, with Lely CANopen retained as fallback."
+    },
+    {
+      "id": "VSN-0036",
+      "priority": 2,
+      "area": "vehicle-interface",
+      "title": "Port GPS/GNSS CAN driver to EVSN broker format",
+      "desired_outcome": "The legacy can_broker GPS driver is rewritten as an EVSN GPS/GNSS CAN driver that consumes raw gateway frames, owns decode for CAN IDs 0x700 through 0x704, and publishes typed navigation state instead of scalar ROS2 topics.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-gps-can-driver-port.md",
+      "acceptance_criteria": [
+        "The generic CAN broker/gateway remains raw-frame only and does not decode GPS payloads",
+        "GPS/GNSS driver filters standard classic CAN IDs 0x700 through 0x704, rejects extended frames, validates DLC, and exposes deterministic diagnostics",
+        "Legacy scalar ROS2 topics such as /gps/lat, /gps/long, /gps/status, and /car/speed/gps are replaced by typed EVSN GNSS/navigation state after RTI guidance",
+        "Latitude, longitude, height, speed, status, IMU status, heading, angular velocity, acceleration, and UTC fields are decoded with confirmed units, ranges, validity, freshness, and stale behavior",
+        "UTC conversion avoids local-time mktime behavior and validates calendar/subsecond fields explicitly",
+        "Smoke, unit, fake raw-CAN integration, DDS integration after RTI gate, QNX/SIL smoke, and regression tests pass with evidence linked to VSN-0033"
+      ],
+      "verification_commands": [
+        "GNSS pure unit tests",
+        "fake raw CAN stream smoke",
+        "DDS isolated-domain GNSS integration test after RTI MCP guidance clears",
+        "QNX/SIL raw CAN smoke when target or QEMU exists",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-20: Created .agents/exec_plans/evsn-gps-can-driver-port.md and .agents/logs/2026-06-20-evsn-gps-can-driver-port.md with legacy can_broker GPS mapping and QNX documentation evidence",
+        "2026-06-20: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed; harness validated 36 work items and links in 123 Markdown files"
+      ],
+      "dependencies": [
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0019",
+        "VSN-0021",
+        "VSN-0022",
+        "VSN-0033"
+      ],
+      "blockers": [
+        "RTI Connext MCP guidance is required before final GNSS DDS type, topic, QoS, and generated-code implementation",
+        "Physical GPS/GNSS documentation or bench vectors are needed to confirm ambiguous heading, angular velocity, acceleration, and UTC subsecond units",
+        "GPS/GNSS bus assignment must be confirmed; the legacy physical architecture places GPS on CAN0, so target integration should consume the read-only CAN0 drive-control mirror rather than generic CAN0 TX routing",
+        "QNX/SIL or target evidence requires configured dev-can-linux -L, QEMU, or physical CAN access"
+      ],
+      "notes": "This extends VSN-0022 without putting decode logic back into the generic broker. The GPS/GNSS package owns IDs 0x700..0x704; the broker routes raw frames only."
+    },
+    {
+      "id": "VSN-0037",
+      "priority": 4,
+      "area": "vehicle-interface",
+      "title": "Shelve HDMI Qt driver display frontend",
+      "desired_outcome": "The old USB/serial display_driver path stays out of the MVP while a future HDMI Qt/QML driver display frontend is tracked as last-priority work fed only by copied EVSN display snapshots.",
+      "status": "not_started",
+      "plan_path": ".agents/exec_plans/evsn-driver-display-qt-frontend.md",
+      "acceptance_criteria": [
+        "The old USB/serial display_driver output path and centre_display package are not ported into the MVP runtime",
+        "Display work remains shelved until core network/control MVP and regression foundations are complete",
+        "Future display implementation targets HDMI through QNX Screen with a Qt Quick/QML frontend",
+        "The display process consumes copied display snapshots only and has no control authority or real-time path participation",
+        "Qt/QNX licensing, target architecture, QNX Screen support, HDMI mode, resolution, DPI, input method, and GPU availability are recorded before implementation",
+        "Smoke, unit, QML/UI, fake snapshot integration, QNX Screen/HDMI target smoke, and regression scans pass before activation"
+      ],
+      "verification_commands": [
+        "./init.sh check",
+        "git diff --check",
+        "Qt/QML lint or QML test suite when implemented",
+        "fake display snapshot unit/integration tests when implemented",
+        "QNX Screen/HDMI target smoke when hardware exists"
+      ],
+      "evidence": [
+        "2026-06-22: Created .agents/exec_plans/evsn-driver-display-qt-frontend.md after user clarified driver display should be shelved until last and rewritten for HDMI plus Qt/QML rather than USB/serial display output",
+        "2026-06-22: python3 -m json.tool .agents/feature_list.json >/dev/null, git diff --check, and ./init.sh check passed; harness validated 37 work items and links in 128 Markdown files",
+        "2026-06-22: Core-equivalence recheck confirmed VSN-0037 remains intentionally shelved and is not required for the core network/control MVP equivalence claim"
+      ],
+      "dependencies": [
+        "VSN-0002",
+        "VSN-0005",
+        "VSN-0020",
+        "VSN-0021",
+        "VSN-0028",
+        "VSN-0030",
+        "VSN-0033"
+      ],
+      "blockers": [
+        "Shelved by user direction until core network/control MVP and regression foundations are complete",
+        "HDMI display hardware, resolution, DPI, orientation, brightness, input method, GPU availability, and target mounting/viewing distance are not yet specified",
+        "Qt for QNX license, target architecture, Qt version, QNX Screen runtime, and target image/startup ownership must be confirmed",
+        "RTI Connext MCP guidance is required before final display snapshot DDS type, topic, QoS, and generated-code implementation"
+      ],
+      "notes": "Do this last. This work replaces the old USB/serial display approach with an HDMI Qt/QML frontend, but it is not part of the MVP equivalence path."
+    },
+    {
+      "id": "VSN-0038",
+      "priority": 1,
+      "area": "qnx-driver",
+      "title": "Implement QNX libcan driver for TI J784S4 MCAN direct CAN access",
+      "desired_outcome": "QNX on the Jacinto 7 J784S4 EVM directly owns selected MCAN controllers and exposes /dev/can* RX/TX endpoints usable by evsn_can_hal without an R5F CAN gateway.",
+      "status": "blocked",
+      "plan_path": ".agents/exec_plans/evsn-j784s4-mcan-libcan-driver.md",
+      "acceptance_criteria": [
+        "The driver is implemented as a QNX libcan resource-manager executable, not as a recompiled Linux SocketCAN driver",
+        "QNX CAN package, J784S4 BSP, TI Processor SDK QNX/RTOS/Linux versions, source provenance, license terms, and package hashes are recorded before implementation",
+        "TI RTOS/PDK/CSL MCAN is used for hardware/register access while TI Linux m_can and J784S4 device-tree content are used only as behavioral and resource references unless legal approves otherwise",
+        "The first POC exposes /dev/can0/rx0 and /dev/can0/tx0 for J42 / MCU_MCAN0 and passes internal loopback",
+        "External J42 / MCU_MCAN0 to J43 / MCU_MCAN1 loopback passes before multi-instance support is claimed",
+        "PCAN-Router or equivalent bench evidence proves classic CAN 500 kbit/s RX/TX through J42 without an R5F CAN gateway in the data path",
+        "CAN-FD, BRS, extended IDs, filters, listen-only mode, bus-off/recovery, RX overflow, TX queue pressure, restart behavior, and sustained traffic are documented and tested before expanded acceptance",
+        "evsn_can_hal can use the driver through the QNX devctl backend without exposing QNX libcan, TI PDK/CSL, or J784S4 driver-private headers in public EVSN application interfaces"
+      ],
+      "verification_commands": [
+        "QNX CAN package audit for libcan.a, hw/libcan.h, and sys/can_dcmd.h",
+        "TI SDK provenance/license/source audit for QNX, RTOS, and Linux packages",
+        "QNX build of devcan-mcan-j784s4",
+        "target smoke showing /dev/can0/rx0 and /dev/can0/tx0",
+        "internal-loopback classic CAN test on J42 / MCU_MCAN0",
+        "external-loopback J42 <-> J43 test",
+        "PCAN-Router bench RX/TX test",
+        "CAN-FD RX/TX test with BRS on/off",
+        "sustained RX/TX stress, bus-off, recovery, RX overflow, and TX queue pressure tests",
+        "EVSN HAL smoke through qnx-devctl backend against devcan-mcan-j784s4",
+        "python3 -m json.tool .agents/feature_list.json >/dev/null",
+        "./init.sh check",
+        "git diff --check"
+      ],
+      "evidence": [
+        "2026-06-24: Created .agents/exec_plans/evsn-j784s4-mcan-libcan-driver.md from user-provided Jacinto 7/J784S4 MCAN framing, repository CAN HAL context, QNX online documentation, QNX J784S4 BSP release notes, and TI SDK/MCAN documentation",
+        "2026-06-24: python3 -m json.tool .agents/feature_list.json >/dev/null, ./init.sh check, and git diff --check passed; harness validated 38 work items and links in 135 Markdown files"
+      ],
+      "dependencies": [
+        "VSN-0002",
+        "VSN-0004",
+        "VSN-0019",
+        "VSN-0033"
+      ],
+      "blockers": [
+        "The public QNX J784S4 BSP driver list does not include CAN/MCAN support",
+        "Required QNX CAN package, TI SDK source packages, and J784S4 target resources are not present in this checkout",
+        "A72/QNX ownership of MCU-domain MCAN, clocks, interrupts, message RAM, and security policy must be confirmed before direct hardware access",
+        "TI PDK/CSL import strategy, license terms, and source boundary must be approved before copying or adapting code",
+        "Linux m_can is GPL and Linux-specific; copied Linux code requires legal approval and should not be the implementation basis",
+        "Physical bench access and fixed PCAN-Router wiring are required before vehicle-control usability can be claimed",
+        "RTI Connext MCP guidance is required before any final DDS bridge type, topic, QoS, reader, writer, or generated-code integration that uses this driver"
+      ],
+      "notes": "This is the board-level direct CAN driver that closes the current TDA4/J784S4 physical MCAN gap left by VSN-0019. Preferred EVSN path after the driver exists: evsn_can_hal qnx-devctl backend -> /dev/canX/rxY|txZ -> devcan-mcan-j784s4 -> J784S4 MCAN hardware. Next action: perform Phase 0 discovery with the actual QNX CAN package, TI SDK sources, and J784S4 target privilege/resource map."
+    }
+  ]
+}

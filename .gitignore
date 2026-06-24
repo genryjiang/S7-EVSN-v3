@@ -9,7 +9,5 @@ docker/.env
 docker/artifacts/
 out/
 build/
-# do not add for now
-.agents/
 
 *.log

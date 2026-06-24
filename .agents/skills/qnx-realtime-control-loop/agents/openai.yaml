@@ -1,0 +1,4 @@
+interface:
+  display_name: "QNX Real-Time Control Loop"
+  short_description: "QNX periodic RT loop design review"
+  default_prompt: "Use $qnx-realtime-control-loop to review a QNX periodic actuator-control loop for isolation, configured period, fail-safe behavior, and timing evidence."

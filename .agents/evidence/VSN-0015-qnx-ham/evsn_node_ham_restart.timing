@@ -1,0 +1,5 @@
+mode=restarted
+ticks=15
+interval_count=14
+min_interval_us=97462
+max_interval_us=104387

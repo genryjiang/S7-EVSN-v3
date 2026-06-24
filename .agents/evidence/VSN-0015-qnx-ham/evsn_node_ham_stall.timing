@@ -1,0 +1,5 @@
+mode=stall
+ticks=6
+interval_count=5
+min_interval_us=99950
+max_interval_us=3599988
