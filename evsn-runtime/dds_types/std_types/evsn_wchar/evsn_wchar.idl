@@ -1,0 +1,3 @@
+struct EVSNWchar {
+    wchar data;
+};

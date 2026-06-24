@@ -1,0 +1,17 @@
+### Auto-add core modules
+file(GLOB CORE_MODULE_DIRS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/*")
+foreach(module_dir ${CORE_MODULE_DIRS})
+	if(IS_DIRECTORY "${module_dir}" AND EXISTS "${module_dir}/CMakeLists.txt")
+		get_filename_component(module_name "${module_dir}" NAME)
+		add_subdirectory(${module_name})
+	endif()
+endforeach()
+
+### Auto-add all dds type libraries (e.g. std_types, custom_types)
+file(GLOB DDS_TYPE_DIRS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/dds_types/*")
+foreach(type_dir ${DDS_TYPE_DIRS})
+	if(IS_DIRECTORY "${type_dir}" AND EXISTS "${type_dir}/CMakeLists.txt")
+		get_filename_component(type_name "${type_dir}" NAME)
+		add_subdirectory(dds_types/${type_name})
+	endif()
+endforeach()

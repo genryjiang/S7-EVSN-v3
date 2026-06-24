@@ -1,0 +1,15 @@
+node_modules/
+cdk.out/
+dist/
+coverage/
+__pycache__/
+*.pyc
+
+docker/.env
+docker/artifacts/
+out/
+build/
+# do not add for now
+.agents/
+
+*.log

@@ -1,0 +1,3 @@
+struct EVSNInt16 {
+    int16 data;
+};

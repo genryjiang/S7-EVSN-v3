@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if find \
+  "${repo_root}/evsn-runtime/evsn_node" \
+  "${repo_root}/evsn-runtime/dds_types/custom_types/evsn_params" \
+  -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.idl' \) \
+  -print0 \
+  | xargs -0 grep -E -i 'mqtt|mosquitto|device shadow|iot shadow' >/tmp/evsnnode-mqtt-grep.txt; then
+  cat /tmp/evsnnode-mqtt-grep.txt >&2
+  rm -f /tmp/evsnnode-mqtt-grep.txt
+  exit 1
+fi
+
+rm -f /tmp/evsnnode-mqtt-grep.txt

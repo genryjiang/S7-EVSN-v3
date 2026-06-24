@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+args=()
+if [[ $# -eq 0 ]]; then
+  exec "${script_dir}/evsn" build
+fi
+
+if [[ "${1:-}" == "all" ]]; then
+  shift
+elif [[ "${1:-}" == "target" ]]; then
+  shift
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --target|--jobs|--build-type)
+      [[ $# -ge 2 ]] || {
+        printf 'Missing value for %s\n' "$1" >&2
+        exit 2
+      }
+      args+=("$1" "$2")
+      shift 2
+      ;;
+    --target=*|--jobs=*|--build-type=*|--dry-run)
+      args+=("$1")
+      shift
+      ;;
+    --)
+      shift
+      while [[ $# -gt 0 ]]; do
+        args+=(--target "$1")
+        shift
+      done
+      ;;
+    all|target)
+      shift
+      ;;
+    -*)
+      args+=("$1")
+      shift
+      ;;
+    *)
+      args+=(--target "$1")
+      shift
+      ;;
+  esac
+done
+
+exec "${script_dir}/evsn" build "${args[@]}"

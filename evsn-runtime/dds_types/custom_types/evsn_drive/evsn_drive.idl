@@ -1,0 +1,32 @@
+enum EVSNDriveGear {
+    EVSN_DRIVE_GEAR_PARK,
+    EVSN_DRIVE_GEAR_REVERSE,
+    EVSN_DRIVE_GEAR_NEUTRAL,
+    EVSN_DRIVE_GEAR_DRIVE
+};
+
+struct EVSNDriveGearCommand {
+    boolean valid;
+    EVSNDriveGear gear;
+    uint32 source_can_id;
+    int32 raw_position_value;
+    uint32 diagnostics;
+    uint32 sample_counter;
+};
+
+struct EVSNMotorControllerStatus {
+    boolean pedal_fresh;
+    boolean gear_fresh;
+    boolean rhs_status_fresh;
+    boolean lhs_status_fresh;
+    boolean outputs_enabled;
+    EVSNDriveGear gear;
+    float accelerator_scalar;
+    float shared_limit_nm;
+    float rhs_limit_nm;
+    float lhs_limit_nm;
+    float rhs_requested_torque_nm;
+    float lhs_requested_torque_nm;
+    uint32 diagnostics;
+    uint32 sample_counter;
+};

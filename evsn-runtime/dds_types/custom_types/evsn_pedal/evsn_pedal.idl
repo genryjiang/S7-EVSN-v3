@@ -1,0 +1,17 @@
+struct EVSNPedalState {
+    boolean accelerator_valid;
+    boolean brake_status_valid;
+    boolean input_fresh;
+    uint64 input_received_at_ms;
+    uint32 input_age_ms;
+    float accelerator_percent;
+    float accelerator_scalar;
+    float throttle_channel_1_v;
+    float throttle_channel_2_v;
+    float throttle_channel_1_percent;
+    float throttle_channel_2_percent;
+    boolean brake_light_request;
+    uint32 source_can_id;
+    uint32 diagnostics;
+    uint32 sample_counter;
+};

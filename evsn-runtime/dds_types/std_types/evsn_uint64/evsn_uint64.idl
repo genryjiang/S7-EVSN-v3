@@ -1,0 +1,3 @@
+struct EVSNUint64 {
+    uint64 data;
+};

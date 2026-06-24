@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=qnx-common.sh
+. "${script_dir}/qnx-common.sh"
+
+qnx_require_docker
+qnx_require_env_file
+qnx_ensure_builder
+
+if [[ "${1:-}" == "--clean" ]]; then
+  qnx_compose exec -T --user root "${QNX_BUILDER_SERVICE}" \
+    bash -lc 'find /workspace/linux-build /workspace/linux-deploy -mindepth 1 -maxdepth 1 -exec rm -rf {} +'
+  shift
+fi
+
+qnx_compose exec -T --user developer "${QNX_BUILDER_SERVICE}" bash -lc '
+  set -euo pipefail
+  export CONNEXTDDS_ARCH="${LINUX_CONNEXTDDS_ARCH:-x64Linux4gcc7.3.0}"
+  export LD_LIBRARY_PATH="${NDDSHOME}/lib/${CONNEXTDDS_ARCH}:${LD_LIBRARY_PATH:-}"
+  cmake \
+    -S /workspace/project \
+    -B /workspace/linux-build \
+    -G Ninja \
+    -DCMAKE_BUILD_TYPE="${LINUX_BUILD_TYPE:-Debug}" \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DCMAKE_INSTALL_PREFIX=/workspace/linux-deploy \
+    -DBUILD_TESTING=ON \
+    -DEVSN_TARGET_LINUX=ON
+
+  if [[ $# -eq 0 ]]; then
+    cmake --build /workspace/linux-build --parallel "${LINUX_BUILD_JOBS:-8}"
+  else
+    cmake --build /workspace/linux-build \
+      --parallel "${LINUX_BUILD_JOBS:-8}" --target "$@"
+  fi
+
+  cmake --install /workspace/linux-build
+' bash "$@"

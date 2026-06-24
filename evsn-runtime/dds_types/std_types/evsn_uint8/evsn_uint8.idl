@@ -1,0 +1,3 @@
+struct EVSNUint8 {
+    uint8 data;
+};

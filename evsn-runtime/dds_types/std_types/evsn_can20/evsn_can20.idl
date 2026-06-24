@@ -1,0 +1,7 @@
+struct EVSNCan20Frame {
+    uint32 id;
+    boolean extended_id;
+    boolean remote_frame;
+    uint8 dlc;
+    sequence<octet, 8> data;
+};
