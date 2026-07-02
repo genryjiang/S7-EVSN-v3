@@ -1,0 +1,3 @@
+struct EVSNUint16 {
+    uint16 data;
+};

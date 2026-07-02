@@ -1,0 +1,4 @@
+struct EVSNFDCanFrame {
+    uint32 id;
+    sequence<octet, 64> data;
+};

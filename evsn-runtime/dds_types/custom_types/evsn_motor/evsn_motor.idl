@@ -1,0 +1,96 @@
+enum EVSNMcuMode {
+    EVSN_MCU_STANDBY,
+    EVSN_MCU_TORQUE_CONTROL,
+    EVSN_MCU_SPEED_CONTROL,
+    EVSN_MCU_CLOSE_CLUTCH,
+    EVSN_MCU_AUTO_ANGLE_OFFSET,
+    EVSN_MCU_ERROR,
+    EVSN_MCU_UNUSED_6,
+    EVSN_MCU_UNUSED_7,
+    EVSN_MCU_UNUSED_8,
+    EVSN_MCU_UNUSED_9,
+    EVSN_MCU_UNUSED_10,
+    EVSN_MCU_BOOT,
+    EVSN_MCU_CHARGE,
+    EVSN_MCU_SHUTDOWN,
+    EVSN_MCU_UNUSED_14,
+    EVSN_MCU_INITIALIZATION
+};
+
+struct EVSNMotorRequest {
+    boolean enable;
+    EVSNMcuMode requested_mode;
+    float target_torque_nm;
+    float vehicle_speed_kmh;
+    uint8 max_recu_power_kw;
+    uint8 max_boost_power_kw;
+};
+
+struct EVSNMcuControl {
+    int32 target_speed_rpm;
+    boolean clutch_open_request;
+    float vehicle_speed_kmh;
+    uint8 max_recu_power_kw;
+    uint8 max_boost_power_kw;
+    uint8 message_count;
+    boolean recorder_flash_reset;
+    boolean clear_errors_request;
+    boolean active_discharge_request;
+    EVSNMcuMode requested_mode;
+    float target_torque_nm;
+};
+
+struct EVSNMcuActualOperation {
+    boolean discharge_active;
+    boolean contactor_open_request;
+    uint8 limits;
+    float minimum_torque_nm;
+    float maximum_torque_nm;
+    uint8 message_count;
+    EVSNMcuMode actual_mode;
+    uint16 dc_link_voltage_v;
+    float actual_torque_nm;
+    int32 actual_speed_rpm;
+};
+
+struct EVSNMcuStatusInfo {
+    uint32 system_warnings;
+    uint8 status;
+    uint32 errors;
+    uint16 deratings;
+};
+
+struct EVSNMcuTemperatures {
+    float cooling_inlet_c;
+    float stator_minimum_c;
+    float semiconductor_minimum_c;
+    float dc_link_c;
+    float rotor_c;
+    float stator_maximum_c;
+    float semiconductor_maximum_c;
+    float controller_board_c;
+};
+
+struct EVSNMcuSystemInfo {
+    uint8 multiplexor;
+    uint8 mgu_serial_number;
+    uint16 mgu_mds_crc;
+    uint16 mcu_pds_crc;
+    uint16 mcu_kds_crc;
+    uint16 mcu_dds_crc;
+    uint8 mcu_hardware_version;
+    uint8 mcu_serial_number;
+    uint16 mcu_software_version_time;
+    uint32 mcu_software_version_date;
+};
+
+struct EVSNMotorStatus {
+    boolean actual_operation_fresh;
+    boolean status_info_fresh;
+    boolean temperatures_fresh;
+    boolean system_info_fresh;
+    EVSNMcuActualOperation actual_operation;
+    EVSNMcuStatusInfo status_info;
+    EVSNMcuTemperatures temperatures;
+    EVSNMcuSystemInfo system_info;
+};

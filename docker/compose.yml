@@ -1,0 +1,43 @@
+name: dev-env-builder
+
+services:
+  dev-env-builder:
+    image: ${DEV_ENV_BUILDER_IMAGE:?Set DEV_ENV_BUILDER_IMAGE in docker/.env}
+    pull_policy: missing
+    platform: linux/amd64
+    user: root
+    command:
+      - bash
+      - -lc
+      - |
+        mkdir -p /home/developer/.qnx /workspace/project/.intellisense /workspace/project/build /workspace/linux-build /workspace/linux-deploy
+        chown -R developer:developer /home/developer/.qnx /workspace/project/.intellisense /workspace/project/build /workspace/linux-build /workspace/linux-deploy
+        if [[ "${DEV_ENV_ENABLE_MULTICAST_ROUTE:-1}" == "1" ]] && command -v ip >/dev/null 2>&1; then
+          ip route replace 224.0.0.0/4 dev eth0 || echo "Warning: could not configure Docker multicast route" >&2
+        fi
+        exec sleep infinity
+    init: true
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ..:/workspace/project
+      - qnx-build-amd64:/workspace/project/build
+      - ../out/qnx:/workspace/project/deploy
+      - linux-build-amd64:/workspace/linux-build
+      - ../out/linux:/workspace/linux-deploy
+    environment:
+      QNX_HOST: /home/developer/qnx800/host/linux/x86_64
+      QNX_TARGET: /home/developer/qnx800/target/qnx
+      QNX_CONFIGURATION: /home/developer/.qnx
+      QNX_CONFIGURATION_EXCLUSIVE: /home/developer/.qnx
+      NDDSHOME: /home/developer/rti_connext_dds-7.3.1
+      RTI_HOME: /home/developer/rti_connext_dds-7.3.1
+      CONNEXTDDS_ARCH: ${CONNEXTDDS_ARCH:-}
+      DEV_ENV_REPO_ROOT: /workspace/project
+      DEV_ENV_ENABLE_MULTICAST_ROUTE: ${DEV_ENV_ENABLE_MULTICAST_ROUTE:-1}
+
+volumes:
+  qnx-build-amd64:
+    name: dev-env-builder-qnx-build-amd64
+  linux-build-amd64:
+    name: dev-env-builder-linux-build-amd64

@@ -1,0 +1,37 @@
+Proprietary and Confidential License
+
+Copyright (c) 2026 Henry Jiang
+All rights reserved.
+
+This repository and all source code, documentation, build scripts, configuration,
+assets, and other materials contained in it are proprietary and confidential.
+
+No license, permission, or right is granted to any person or entity except by
+express prior written permission from the copyright holder or an authorized
+representative.
+
+Unless you have that express prior written permission, you must not:
+
+- use, run, compile, build, test, deploy, or operate this software;
+- copy, reproduce, publish, distribute, sublicense, sell, lease, lend, host, or
+  otherwise transfer this software or any part of it;
+- modify, adapt, translate, reverse engineer, decompile, disassemble, or create
+  derivative works based on this software;
+- use this software or any part of it to develop, train, evaluate, or improve
+  any model, product, service, or system; or
+- remove, alter, or obscure any copyright, license, proprietary, or
+  confidentiality notice.
+
+Access to this repository or possession of a copy of its contents does not grant
+any permission to use the software. Any authorized use is limited strictly to
+the scope, duration, and purpose stated in the applicable written permission or
+agreement.
+
+Third-party software, libraries, tools, or materials referenced by or included
+with this repository remain subject to their own license terms. This license
+does not grant rights to any third-party material.
+
+This software is provided without warranty of any kind, whether express,
+implied, statutory, or otherwise. To the maximum extent permitted by law, the
+copyright holder and contributors are not liable for any claim, damages, or
+other liability arising from access to, possession of, or use of this software.

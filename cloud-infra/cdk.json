@@ -1,0 +1,48 @@
+{
+  "app": "npx ts-node --prefer-ts-exts bin/dev-env-builder.ts",
+  "watch": {
+    "include": [
+      "**"
+    ],
+    "exclude": [
+      "README.md",
+      "cdk*.json",
+      "**/*.d.ts",
+      "**/*.js",
+      "tsconfig.json",
+      "package*.json",
+      "yarn.lock",
+      "node_modules",
+      "test"
+    ]
+  },
+  "context": {
+    "devEnvBuilder": {
+      "githubOwner": "example-owner",
+      "githubRepo": "example-repo",
+      "githubBranch": "main",
+      "projectName": "Dev-Env-Builder",
+      "repositoryName": "dev-env-builder",
+      "imageTagPrefix": "dev-env-builder-amd64",
+      "qnxSdpKey": "qnx/qnx-sdp.tar.gz",
+      "qnxLicenseKey": "qnx/qnx-license.tar.gz",
+      "rtiKey": "rti/rti_connext-7.3.1.tar.gz",
+      "tiPsdkRtosKey": "ti/ti-processor-sdk-rtos-j784s4-evm-11_02_00_06.tar.gz",
+      "tiPsdkQnxKey": "ti/ti-processor-sdk-qnx_800_j784s4_11_02_00_04.tar.gz",
+      "tiQnxBspKey": "ti/BSP_ti-j784s4-evm_be-800_SVN1019295_JBN342.zip"
+    },
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/core:target-partitions": [
+      "aws",
+      "aws-cn"
+    ],
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/core:validateSnapshotRemovalPolicy": true,
+    "@aws-cdk/aws-s3:createDefaultLoggingPolicy": true,
+    "@aws-cdk/aws-ec2:restrictDefaultSecurityGroup": true,
+    "@aws-cdk/customresources:installLatestAwsSdkDefault": false,
+    "@aws-cdk/core:explicitStackTags": true,
+    "@aws-cdk/aws-s3:publicAccessBlockedByDefault": true,
+    "@aws-cdk/aws-lambda:useCdkManagedLogGroup": true
+  }
+}

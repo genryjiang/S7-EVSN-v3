@@ -1,0 +1,13 @@
+CompileFlags:
+  CompilationDatabase: out/qnx
+  Add:
+    - -nostdinc
+    - -nostdinc++
+    - -D__AARCH64EL__=1
+    - -U__APPLE__
+    - -U__MACH__
+    - -U__linux__
+    - -U__gnu_linux__
+    - -Ulinux
+    - -U__unix__
+    - -U__unix

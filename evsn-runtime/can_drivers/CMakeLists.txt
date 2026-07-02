@@ -1,0 +1,7 @@
+file(GLOB CAN_DRIVER_DIRS LIST_DIRECTORIES true "${CMAKE_CURRENT_SOURCE_DIR}/*")
+foreach(driver_dir ${CAN_DRIVER_DIRS})
+    if(IS_DIRECTORY "${driver_dir}" AND EXISTS "${driver_dir}/CMakeLists.txt")
+        get_filename_component(driver_name "${driver_dir}" NAME)
+        add_subdirectory(${driver_name})
+    endif()
+endforeach()

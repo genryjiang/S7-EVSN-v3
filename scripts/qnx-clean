@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ $# -gt 0 ]]; then
+  exec "${script_dir}/evsn" clean "$@"
+fi
+
+if [[ "${1:-}" != "--yes" ]]; then
+  root="$(cd "${script_dir}/.." && pwd)"
+  output_dir="${root}/out/qnx"
+  printf 'Remove the QNX amd64 build volume and all generated files under %s? [y/N] ' "${output_dir}"
+  read -r response
+  [[ "${response}" == "y" || "${response}" == "Y" ]] || {
+    echo "Clean cancelled."
+    exit 0
+  }
+fi
+
+exec "${script_dir}/evsn" clean --build-cache --artifacts --yes

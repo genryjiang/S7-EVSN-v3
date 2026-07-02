@@ -1,0 +1,72 @@
+version: 0.2
+
+env:
+  variables:
+    DOCKER_BUILDKIT: "1"
+    QNX_SDP_KEY: qnx/qnx-sdp.tar.gz
+    QNX_LICENSE_KEY: qnx/qnx-license.tar.gz
+    RTI_KEY: rti/rti_connext-7.3.1.tar.gz
+    TI_PSDK_RTOS_DIR: ti-processor-sdk-rtos-j784s4-evm-11_02_00_06
+    TI_PSDK_RTOS_ARCHIVE: ti-processor-sdk-rtos-j784s4-evm-11_02_00_06.tar.gz
+    TI_PSDK_RTOS_KEY: ti/ti-processor-sdk-rtos-j784s4-evm-11_02_00_06.tar.gz
+    TI_PSDK_QNX_ARCHIVE: ti-processor-sdk-qnx_800_j784s4_11_02_00_04.tar.gz
+    TI_PSDK_QNX_KEY: ti/ti-processor-sdk-qnx_800_j784s4_11_02_00_04.tar.gz
+    TI_QNX_SDP_VERSION: "800"
+    TI_QNX_BSP_ARCHIVE: BSP_ti-j784s4-evm_be-800_SVN1019295_JBN342.zip
+    TI_QNX_BSP_KEY: ti/BSP_ti-j784s4-evm_be-800_SVN1019295_JBN342.zip
+    IMAGE_TAG_PREFIX: dev-env-builder-amd64
+    QNX_SDP_VERSION: "8.0"
+    QNX_MOSQUITTO_REF: 35aa903edcceedc2c8010c4c47c7a316a89c9725
+
+phases:
+  pre_build:
+    commands:
+      - ': "${AWS_DEFAULT_REGION:?AWS_DEFAULT_REGION is required}"'
+      - ': "${AWS_ACCOUNT_ID:?AWS_ACCOUNT_ID is required}"'
+      - ': "${ECR_URL:?ECR_URL is required}"'
+      - ': "${IMAGE_REPO_NAME:?IMAGE_REPO_NAME is required}"'
+      - ': "${S3_BUCKET:?S3_BUCKET is required}"'
+      - mkdir -p artifacts
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_URL"
+      - SOURCE_VERSION="${CODEBUILD_RESOLVED_SOURCE_VERSION:-manual}"
+      - GIT_HASH="$(printf '%s' "$SOURCE_VERSION" | cut -c1-6)"
+      - if [ -z "$GIT_HASH" ] || [ "$GIT_HASH" = "manual" ]; then GIT_HASH="$(date +%Y%m%d%H%M%S)"; fi
+      - IMAGE_TAG="${IMAGE_TAG_PREFIX}-${GIT_HASH}"
+      - IMAGE_LATEST_TAG="${IMAGE_TAG_PREFIX}-latest"
+      - aws s3 cp "s3://${S3_BUCKET}/${QNX_SDP_KEY}" "artifacts/qnx800.tar.gz"
+      - aws s3 cp "s3://${S3_BUCKET}/${RTI_KEY}" "artifacts/rti_connext-7.3.1.tar.gz"
+      - aws s3 cp "s3://${S3_BUCKET}/${QNX_LICENSE_KEY}" "artifacts/qnx_license.tar.gz"
+      - aws s3 cp "s3://${S3_BUCKET}/${TI_PSDK_RTOS_KEY}" "artifacts/${TI_PSDK_RTOS_ARCHIVE}"
+      - aws s3 cp "s3://${S3_BUCKET}/${TI_PSDK_QNX_KEY}" "artifacts/${TI_PSDK_QNX_ARCHIVE}"
+      - aws s3 cp "s3://${S3_BUCKET}/${TI_QNX_BSP_KEY}" "artifacts/${TI_QNX_BSP_ARCHIVE}"
+      - docker pull "$ECR_URL/$IMAGE_REPO_NAME:$IMAGE_LATEST_TAG" || true
+  build:
+    commands:
+      - >
+        docker build --progress=plain --platform linux/amd64
+        -f docker/Dockerfile
+        --cache-from "$ECR_URL/$IMAGE_REPO_NAME:$IMAGE_LATEST_TAG"
+        --build-arg USER_NAME=developer
+        --build-arg GROUP_NAME=developer
+        --build-arg USER_ID=1000
+        --build-arg GROUP_ID=1000
+        --build-arg QNX_SDP_VERSION="$QNX_SDP_VERSION"
+        --build-arg QNX_MOSQUITTO_REF="$QNX_MOSQUITTO_REF"
+        --build-arg TI_PSDK_RTOS_DIR="$TI_PSDK_RTOS_DIR"
+        --build-arg TI_PSDK_RTOS_ARCHIVE="$TI_PSDK_RTOS_ARCHIVE"
+        --build-arg TI_PSDK_QNX_ARCHIVE="$TI_PSDK_QNX_ARCHIVE"
+        --build-arg TI_QNX_SDP_VERSION="$TI_QNX_SDP_VERSION"
+        --build-arg TI_QNX_BSP_ARCHIVE="$TI_QNX_BSP_ARCHIVE"
+        -t "$ECR_URL/$IMAGE_REPO_NAME:$IMAGE_TAG"
+        .
+      - docker tag "$ECR_URL/$IMAGE_REPO_NAME:$IMAGE_TAG" "$ECR_URL/$IMAGE_REPO_NAME:$IMAGE_LATEST_TAG"
+  post_build:
+    commands:
+      - |
+        if [ "${CODEBUILD_BUILD_SUCCEEDING:-0}" != "1" ]; then
+          echo "Skipping docker push because the build phase failed."
+          exit 1
+        fi
+      - echo "Pushing docker images..."
+      - docker push "$ECR_URL/$IMAGE_REPO_NAME:$IMAGE_TAG"
+      - docker push "$ECR_URL/$IMAGE_REPO_NAME:$IMAGE_LATEST_TAG"

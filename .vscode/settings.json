@@ -1,0 +1,46 @@
+{
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/out/qnx/compile_commands.json",
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "C_Cpp.errorSquiggles": "disabled",
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/out/qnx",
+    "--completion-style=detailed",
+    "--header-insertion=iwyu"
+  ],
+  "clangd.enableCodeCompletion": true,
+  "clangd.serverCompletionRanking": false,
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "off",
+    "strings": "on"
+  },
+  "files.watcherExclude": {
+    "**/.intellisense/**": true,
+    "**/out/**": true
+  },
+  "search.exclude": {
+    "**/.intellisense": true,
+    "**/out": true
+  },
+  "terminal.integrated.profiles.osx": {
+    "QNX Builder": {
+      "path": "bash",
+      "args": [
+        "-lc",
+        "cd \"${workspaceFolder}\" && ./scripts/evsn shell"
+      ],
+      "icon": "terminal-bash"
+    }
+  },
+  "terminal.integrated.profiles.linux": {
+    "QNX Builder": {
+      "path": "bash",
+      "args": [
+        "-lc",
+        "cd \"${workspaceFolder}\" && ./scripts/evsn shell"
+      ],
+      "icon": "terminal-bash"
+    }
+  }
+}

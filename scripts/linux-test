@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=qnx-common.sh
+. "${script_dir}/qnx-common.sh"
+
+"${script_dir}/linux-build" "$@"
+
+qnx_compose exec -T --user developer "${QNX_BUILDER_SERVICE}" bash -lc '
+  set -euo pipefail
+  export CONNEXTDDS_ARCH="${LINUX_CONNEXTDDS_ARCH:-x64Linux4gcc7.3.0}"
+  export LD_LIBRARY_PATH="${NDDSHOME}/lib/x64Linux4gcc7.3.0:${LD_LIBRARY_PATH:-}"
+  ctest --test-dir /workspace/linux-build --output-on-failure --timeout 60 --no-tests=error
+'

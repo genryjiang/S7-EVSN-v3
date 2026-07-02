@@ -1,0 +1,75 @@
+enum EVSNParameterType {
+    EVSN_PARAM_BOOL,
+    EVSN_PARAM_INT64,
+    EVSN_PARAM_FLOAT64,
+    EVSN_PARAM_STRING
+};
+
+enum EVSNParameterOperation {
+    EVSN_PARAM_GET,
+    EVSN_PARAM_SET,
+    EVSN_PARAM_LIST,
+    EVSN_PARAM_DESCRIBE
+};
+
+struct EVSNParameterValue {
+    EVSNParameterType value_type;
+    boolean bool_value;
+    int64 int_value;
+    double float_value;
+    string<256> string_value;
+};
+
+struct EVSNParameterDescriptor {
+    string<64> node_name;
+    string<128> parameter_name;
+    EVSNParameterType value_type;
+    EVSNParameterValue default_value;
+    boolean mutable_at_runtime;
+    boolean has_min;
+    double min_value;
+    boolean has_max;
+    double max_value;
+    string<32> unit;
+    string<256> description;
+    string<256> fallback_behavior;
+};
+
+struct EVSNParameterState {
+    @key string<64> node_name;
+    @key string<128> parameter_name;
+    EVSNParameterValue value;
+    boolean mutable_at_runtime;
+    string<32> unit;
+    string<256> description;
+};
+
+struct EVSNParameterEvent {
+    string<64> node_name;
+    string<128> parameter_name;
+    string<64> requester;
+    string<64> source;
+    int64 timestamp_unix_ms;
+    boolean accepted;
+    string<256> reason;
+    EVSNParameterValue requested_value;
+    EVSNParameterValue resulting_value;
+};
+
+struct EVSNParameterRequest {
+    string<64> node_name;
+    string<128> parameter_name;
+    string<64> requester;
+    string<64> source;
+    EVSNParameterOperation operation;
+    EVSNParameterValue value;
+};
+
+struct EVSNParameterReply {
+    string<64> node_name;
+    EVSNParameterOperation operation;
+    boolean accepted;
+    string<256> reason;
+    sequence<EVSNParameterState, 128> states;
+    sequence<EVSNParameterDescriptor, 128> descriptors;
+};

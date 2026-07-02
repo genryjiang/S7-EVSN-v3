@@ -1,0 +1,3 @@
+[submodule "vcan-drivers"]
+	path = vcan-drivers
+	url = git@github.com:genryjiang/dev-can-linux.git
