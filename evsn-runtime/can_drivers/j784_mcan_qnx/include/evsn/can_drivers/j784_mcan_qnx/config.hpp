@@ -59,6 +59,17 @@ struct McanHardwareInstanceConfig {
   McanHardwareRegion controller{};
   McanHardwareRegion message_ram{};
   std::uint32_t tisci_device_id{0U};
+  std::uint32_t qnx_logical_irq{0U};
+};
+
+struct McanControllerTimingOverride {
+  bool valid{false};
+  std::uint32_t source_clock_hz{0U};
+  std::uint32_t bitrate{0U};
+  std::uint16_t prescaler{0U};
+  std::uint8_t time_segment_before_sample{0U};
+  std::uint8_t time_segment_after_sample{0U};
+  std::uint8_t sync_jump_width{0U};
 };
 
 struct McanControllerConfig {
@@ -73,10 +84,14 @@ struct McanControllerConfig {
   std::uint32_t arbitration_bitrate{0U};
   bool data_bitrate_valid{false};
   std::uint32_t data_bitrate{0U};
+  McanControllerTimingOverride nominal_timing_override{};
+  McanControllerTimingOverride data_timing_override{};
   bool qnx_direct_ownership_confirmed{false};
   bool board_mapping_evidence_confirmed{false};
   bool target_startup_evidence_confirmed{false};
-  bool bench_evidence_confirmed{false};
+  bool transceiver_control_evidence_confirmed{false};
+  bool qnx_irq_routing_evidence_confirmed{false};
+  bool external_can_bench_evidence_confirmed{false};
   McanHardwareInstanceConfig hardware{};
 };
 
@@ -93,15 +108,20 @@ struct McanResourceManagerConfig {
                                             McanEndpointPath &path) noexcept;
 [[nodiscard]] McanStatus
 validate_controller_skeleton(const McanControllerConfig &config) noexcept;
-[[nodiscard]] McanStatus validate_hardware_region(
-    const McanHardwareRegion &region, std::uint32_t minimum_size_bytes) noexcept;
+[[nodiscard]] McanStatus
+validate_hardware_region(const McanHardwareRegion &region,
+                         std::uint32_t minimum_size_bytes) noexcept;
 [[nodiscard]] McanStatus validate_controller_hardware_mapping(
     const McanControllerConfig &config) noexcept;
 [[nodiscard]] McanStatus validate_controller_for_hardware_start(
     const McanControllerConfig &config) noexcept;
+[[nodiscard]] McanStatus validate_controller_for_interrupt_start(
+    const McanControllerConfig &config) noexcept;
 [[nodiscard]] McanStatus validate_resource_manager_skeleton(
     const McanResourceManagerConfig &config) noexcept;
 [[nodiscard]] McanStatus validate_resource_manager_hardware_start(
+    const McanResourceManagerConfig &config) noexcept;
+[[nodiscard]] McanStatus validate_resource_manager_interrupt_start(
     const McanResourceManagerConfig &config) noexcept;
 
 } // namespace evsn::can_drivers::j784_mcan_qnx

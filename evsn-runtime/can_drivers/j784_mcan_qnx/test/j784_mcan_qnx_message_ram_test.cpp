@@ -17,17 +17,16 @@ using evsn::can_drivers::j784_mcan_qnx::McanStatus;
 
 McanControllerCapabilities fd_capabilities() {
   auto capabilities = McanControllerCapabilities{};
-  capabilities.flags =
-      evsn::can_drivers::j784_mcan_qnx::capability_value(
-          McanCapabilityFlag::classic_frame) |
-      evsn::can_drivers::j784_mcan_qnx::capability_value(
-          McanCapabilityFlag::fd_frame) |
-      evsn::can_drivers::j784_mcan_qnx::capability_value(
-          McanCapabilityFlag::extended_id) |
-      evsn::can_drivers::j784_mcan_qnx::capability_value(
-          McanCapabilityFlag::brs) |
-      evsn::can_drivers::j784_mcan_qnx::capability_value(
-          McanCapabilityFlag::esi);
+  capabilities.flags = evsn::can_drivers::j784_mcan_qnx::capability_value(
+                           McanCapabilityFlag::classic_frame) |
+                       evsn::can_drivers::j784_mcan_qnx::capability_value(
+                           McanCapabilityFlag::fd_frame) |
+                       evsn::can_drivers::j784_mcan_qnx::capability_value(
+                           McanCapabilityFlag::extended_id) |
+                       evsn::can_drivers::j784_mcan_qnx::capability_value(
+                           McanCapabilityFlag::brs) |
+                       evsn::can_drivers::j784_mcan_qnx::capability_value(
+                           McanCapabilityFlag::esi);
   return capabilities;
 }
 
@@ -35,8 +34,7 @@ McanFrameTransfer fd_frame() {
   auto frame = McanFrameTransfer{};
   frame.can_id = 0x1ABCDEU;
   frame.flags =
-      evsn::can_drivers::j784_mcan_qnx::flag_value(
-          McanFrameFlag::extended_id) |
+      evsn::can_drivers::j784_mcan_qnx::flag_value(McanFrameFlag::extended_id) |
       evsn::can_drivers::j784_mcan_qnx::flag_value(McanFrameFlag::fd_frame) |
       evsn::can_drivers::j784_mcan_qnx::flag_value(McanFrameFlag::brs) |
       evsn::can_drivers::j784_mcan_qnx::flag_value(McanFrameFlag::esi);
@@ -53,9 +51,9 @@ McanFrameTransfer fd_frame() {
 TEST(J784McanQnxMessageRamTest, EncodesPdkLoopbackLayoutRegisters) {
   const auto layout =
       evsn::can_drivers::j784_mcan_qnx::make_pdk_loopback_message_ram_layout();
-  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(
-                layout),
-            McanStatus::ok);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(layout),
+      McanStatus::ok);
 
   auto registers = McanMessageRamRegisters{};
   ASSERT_EQ(evsn::can_drivers::j784_mcan_qnx::encode_message_ram_registers(
@@ -74,25 +72,25 @@ TEST(J784McanQnxMessageRamTest, RejectsOverlappingOrOversizedLayouts) {
   auto layout =
       evsn::can_drivers::j784_mcan_qnx::make_pdk_loopback_message_ram_layout();
   layout.rx_fifo0.start_word = 150U;
-  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(
-                layout),
-            McanStatus::invalid_hardware_mapping);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(layout),
+      McanStatus::invalid_hardware_mapping);
 
   layout =
       evsn::can_drivers::j784_mcan_qnx::make_pdk_loopback_message_ram_layout();
   layout.tx_buffers.count = 33U;
-  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(
-                layout),
-            McanStatus::invalid_hardware_mapping);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(layout),
+      McanStatus::invalid_hardware_mapping);
 }
 
 TEST(J784McanQnxMessageRamTest, RejectsLayoutElementSizeMismatch) {
   auto layout =
       evsn::can_drivers::j784_mcan_qnx::make_pdk_loopback_message_ram_layout();
   layout.rx_fifo0.element_words = 17U;
-  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(
-                layout),
-            McanStatus::invalid_hardware_mapping);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::validate_message_ram_layout(layout),
+      McanStatus::invalid_hardware_mapping);
 
   layout =
       evsn::can_drivers::j784_mcan_qnx::make_pdk_loopback_message_ram_layout();
@@ -131,9 +129,8 @@ TEST(J784McanQnxMessageRamTest, EncodesAndDecodesCanFdPayloadElements) {
 
 TEST(J784McanQnxMessageRamTest, RejectsUnsupportedFrameCapabilities) {
   auto capabilities = fd_capabilities();
-  capabilities.flags &=
-      ~evsn::can_drivers::j784_mcan_qnx::capability_value(
-          McanCapabilityFlag::brs);
+  capabilities.flags &= ~evsn::can_drivers::j784_mcan_qnx::capability_value(
+      McanCapabilityFlag::brs);
   auto element = McanMessageRamElement{};
   EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::encode_tx_message_ram_element(
                 fd_frame(), capabilities, element),

@@ -84,6 +84,7 @@ validate_bit_timing(const McanBitTiming &timing) noexcept;
 inject_received_frame(McanCore &core, const McanFrameTransfer &frame) noexcept;
 [[nodiscard]] McanStatus
 transmit_frame(McanCore &core, const McanFrameTransfer &frame) noexcept;
+[[nodiscard]] McanStatus complete_transmitted_frame(McanCore &core) noexcept;
 [[nodiscard]] McanStatus receive_frame(McanCore &core,
                                        McanFrameTransfer &frame) noexcept;
 [[nodiscard]] std::uint32_t read_core_register(const McanCore &core,

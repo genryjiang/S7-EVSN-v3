@@ -12,5 +12,7 @@ out/
 build/
 # do not add for now
 .agents/
+# exclude extra_docs
+extra_docs/
 
 *.log

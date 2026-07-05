@@ -284,6 +284,26 @@ McanStatus transmit_frame(McanCore &core,
   return McanStatus::ok;
 }
 
+McanStatus complete_transmitted_frame(McanCore &core) noexcept {
+  const auto status = ready_for_frame_io(core);
+  if (!status_ok(status)) {
+    return status;
+  }
+  if (core.tx_count == 0U) {
+    return McanStatus::no_frame;
+  }
+  core.tx_queue[core.tx_tail] = McanFrameTransfer{};
+  core.tx_tail =
+      next_index(core.tx_tail, core.config.controller.tx_queue_capacity);
+  --core.tx_count;
+  refresh_fifo_registers(core);
+  if (core.tx_count == 0U) {
+    core.registers[register_index(McanCoreRegister::interrupt_status)] &=
+        ~kInterruptTxComplete;
+  }
+  return McanStatus::ok;
+}
+
 McanStatus receive_frame(McanCore &core, McanFrameTransfer &frame) noexcept {
   const auto status = ready_for_frame_io(core);
   if (!status_ok(status)) {

@@ -8,12 +8,16 @@ namespace evsn::can_drivers::j784_mcan_qnx {
 
 enum class McanCfgRegisterOffset : std::uint32_t {
   crel = 0x00U,
+  endn = 0x04U,
   dbtp = 0x0CU,
   test = 0x10U,
   cccr = 0x18U,
   nbtp = 0x1CU,
+  ecr = 0x40U,
+  psr = 0x44U,
   ir = 0x50U,
   ie = 0x54U,
+  ils = 0x58U,
   ile = 0x5CU,
   gfc = 0x80U,
   sidfc = 0x84U,
@@ -30,6 +34,7 @@ enum class McanCfgRegisterOffset : std::uint32_t {
   txbc = 0xC0U,
   txfqs = 0xC4U,
   txesc = 0xC8U,
+  txbrp = 0xCCU,
   txbar = 0xD0U,
   txbto = 0xD8U,
   txefc = 0xF0U,
@@ -69,12 +74,14 @@ offset_value(McanSsRegisterOffset offset) noexcept {
 }
 
 [[nodiscard]] std::uint32_t mcan_rx_tx_error_interrupt_mask() noexcept;
-[[nodiscard]] McanStatus encode_nominal_bit_timing_register(
-    const McanBitTiming &timing, std::uint32_t &encoded) noexcept;
-[[nodiscard]] McanStatus encode_data_bit_timing_register(
-    const McanBitTiming &timing, std::uint32_t &encoded) noexcept;
-[[nodiscard]] McanStatus make_mcan_register_programming(
-    const McanCoreConfig &config, McanRegisterProgramming &programming)
-    noexcept;
+[[nodiscard]] McanStatus
+encode_nominal_bit_timing_register(const McanBitTiming &timing,
+                                   std::uint32_t &encoded) noexcept;
+[[nodiscard]] McanStatus
+encode_data_bit_timing_register(const McanBitTiming &timing,
+                                std::uint32_t &encoded) noexcept;
+[[nodiscard]] McanStatus
+make_mcan_register_programming(const McanCoreConfig &config,
+                               McanRegisterProgramming &programming) noexcept;
 
 } // namespace evsn::can_drivers::j784_mcan_qnx

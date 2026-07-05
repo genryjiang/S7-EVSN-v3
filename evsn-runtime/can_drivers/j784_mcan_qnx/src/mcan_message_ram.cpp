@@ -19,13 +19,13 @@ constexpr auto kElementDlcShift = std::uint32_t{16U};
 constexpr auto kElementBrs = std::uint32_t{1U << 20U};
 constexpr auto kElementFdf = std::uint32_t{1U << 21U};
 
-[[nodiscard]] bool section_is_empty(
-    const McanMessageRamSection &section) noexcept {
+[[nodiscard]] bool
+section_is_empty(const McanMessageRamSection &section) noexcept {
   return section.count == 0U || section.element_words == 0U;
 }
 
-[[nodiscard]] std::uint32_t section_end_word(
-    const McanMessageRamSection &section) noexcept {
+[[nodiscard]] std::uint32_t
+section_end_word(const McanMessageRamSection &section) noexcept {
   return static_cast<std::uint32_t>(section.start_word) +
          (static_cast<std::uint32_t>(section.count) * section.element_words);
 }
@@ -55,11 +55,11 @@ constexpr auto kElementFdf = std::uint32_t{1U << 21U};
          rhs.start_word < section_end_word(lhs);
 }
 
-[[nodiscard]] bool layout_has_overlaps(
-    const McanMessageRamLayout &layout) noexcept {
+[[nodiscard]] bool
+layout_has_overlaps(const McanMessageRamLayout &layout) noexcept {
   const auto sections = std::array<McanMessageRamSection, 7U>{
       layout.standard_filters, layout.extended_filters, layout.tx_event_fifo,
-      layout.tx_buffers,      layout.rx_fifo0,         layout.rx_fifo1,
+      layout.tx_buffers,       layout.rx_fifo0,         layout.rx_fifo1,
       layout.rx_buffers};
   for (auto index = std::size_t{0U}; index < sections.size(); ++index) {
     for (auto other = index + 1U; other < sections.size(); ++other) {
@@ -71,13 +71,14 @@ constexpr auto kElementFdf = std::uint32_t{1U << 21U};
   return false;
 }
 
-[[nodiscard]] std::uint32_t start_field(
-    const McanMessageRamSection &section) noexcept {
+[[nodiscard]] std::uint32_t
+start_field(const McanMessageRamSection &section) noexcept {
   return static_cast<std::uint32_t>(section.start_word) << 2U;
 }
 
-[[nodiscard]] std::uint32_t payload_word(
-    const McanFrameTransfer &frame, const std::size_t word_index) noexcept {
+[[nodiscard]] std::uint32_t
+payload_word(const McanFrameTransfer &frame,
+             const std::size_t word_index) noexcept {
   const auto payload_offset = word_index * 4U;
   auto word = std::uint32_t{0U};
   for (auto byte = std::size_t{0U}; byte < 4U; ++byte) {
@@ -111,8 +112,9 @@ void payload_from_words(const McanMessageRamElement &element,
   return true;
 }
 
-[[nodiscard]] McanStatus decode_header_words(
-    const McanMessageRamElement &element, McanFrameTransfer &frame) noexcept {
+[[nodiscard]] McanStatus
+decode_header_words(const McanMessageRamElement &element,
+                    McanFrameTransfer &frame) noexcept {
   const auto header0 = element.words[0];
   const auto header1 = element.words[1];
   const auto extended_id = (header0 & kHeaderXtd) != 0U;
@@ -120,9 +122,9 @@ void payload_from_words(const McanMessageRamElement &element,
   const auto esi = (header0 & kHeaderEsi) != 0U;
   const auto fd_frame = (header1 & kElementFdf) != 0U;
   const auto brs = (header1 & kElementBrs) != 0U;
-  frame.can_id = extended_id ? header0 & kMaxExtendedId
-                             : (header0 >> kHeaderIdStandardShift) &
-                                   kMaxStandardId;
+  frame.can_id = extended_id
+                     ? header0 & kMaxExtendedId
+                     : (header0 >> kHeaderIdStandardShift) & kMaxStandardId;
   frame.flags = 0U;
   if (extended_id) {
     frame.flags |= flag_value(McanFrameFlag::extended_id);
@@ -161,7 +163,8 @@ void payload_from_words(const McanMessageRamElement &element,
 McanMessageRamLayout make_pdk_loopback_message_ram_layout() noexcept {
   auto layout = McanMessageRamLayout{};
   layout.standard_filters = McanMessageRamSection{0U, 1U, kStandardFilterWords};
-  layout.extended_filters = McanMessageRamSection{48U, 1U, kExtendedFilterWords};
+  layout.extended_filters =
+      McanMessageRamSection{48U, 1U, kExtendedFilterWords};
   layout.tx_event_fifo = McanMessageRamSection{100U, 5U, kTxEventWords};
   layout.tx_buffers = McanMessageRamSection{148U, 5U, kCanFd64ElementWords};
   layout.rx_fifo0 = McanMessageRamSection{548U, 5U, kCanFd64ElementWords};
@@ -170,9 +173,9 @@ McanMessageRamLayout make_pdk_loopback_message_ram_layout() noexcept {
   return layout;
 }
 
-McanStatus validate_message_ram_layout(
-    const McanMessageRamLayout &layout,
-    const std::uint32_t ram_word_capacity) noexcept {
+McanStatus
+validate_message_ram_layout(const McanMessageRamLayout &layout,
+                            const std::uint32_t ram_word_capacity) noexcept {
   if (ram_word_capacity == 0U) {
     return McanStatus::invalid_hardware_mapping;
   }
@@ -201,47 +204,43 @@ McanStatus validate_message_ram_layout(
   return McanStatus::ok;
 }
 
-McanStatus encode_message_ram_registers(
-    const McanMessageRamLayout &layout,
-    McanMessageRamRegisters &registers) noexcept {
+McanStatus
+encode_message_ram_registers(const McanMessageRamLayout &layout,
+                             McanMessageRamRegisters &registers) noexcept {
   registers = McanMessageRamRegisters{};
   const auto status = validate_message_ram_layout(layout);
   if (!status_ok(status)) {
     return status;
   }
-  registers.sidfc = start_field(layout.standard_filters) |
-                    (static_cast<std::uint32_t>(layout.standard_filters.count)
-                     << 16U);
-  registers.xidfc = start_field(layout.extended_filters) |
-                    (static_cast<std::uint32_t>(layout.extended_filters.count)
-                     << 16U);
+  registers.sidfc =
+      start_field(layout.standard_filters) |
+      (static_cast<std::uint32_t>(layout.standard_filters.count) << 16U);
+  registers.xidfc =
+      start_field(layout.extended_filters) |
+      (static_cast<std::uint32_t>(layout.extended_filters.count) << 16U);
   registers.txbc = start_field(layout.tx_buffers) |
-                   (static_cast<std::uint32_t>(layout.tx_buffers.count)
-                    << 16U);
-  registers.txefc = start_field(layout.tx_event_fifo) |
-                    (static_cast<std::uint32_t>(layout.tx_event_fifo.count)
-                     << 16U) |
-                    (std::uint32_t{3U} << 24U);
+                   (static_cast<std::uint32_t>(layout.tx_buffers.count) << 16U);
+  registers.txefc =
+      start_field(layout.tx_event_fifo) |
+      (static_cast<std::uint32_t>(layout.tx_event_fifo.count) << 16U) |
+      (std::uint32_t{3U} << 24U);
   registers.rxf0c = start_field(layout.rx_fifo0) |
-                    (static_cast<std::uint32_t>(layout.rx_fifo0.count)
-                     << 16U) |
+                    (static_cast<std::uint32_t>(layout.rx_fifo0.count) << 16U) |
                     (std::uint32_t{3U} << 24U);
   registers.rxf1c = start_field(layout.rx_fifo1) |
-                    (static_cast<std::uint32_t>(layout.rx_fifo1.count)
-                     << 16U) |
+                    (static_cast<std::uint32_t>(layout.rx_fifo1.count) << 16U) |
                     (std::uint32_t{3U} << 24U);
   registers.rxbc = start_field(layout.rx_buffers);
-  registers.rxesc = kCanFd64ElementSizeCode |
-                    (kCanFd64ElementSizeCode << 4U) |
+  registers.rxesc = kCanFd64ElementSizeCode | (kCanFd64ElementSizeCode << 4U) |
                     (kCanFd64ElementSizeCode << 8U);
   registers.txesc = kCanFd64ElementSizeCode;
   return McanStatus::ok;
 }
 
-McanStatus encode_tx_message_ram_element(
-    const McanFrameTransfer &frame,
-    const McanControllerCapabilities &capabilities,
-    McanMessageRamElement &element) noexcept {
+McanStatus
+encode_tx_message_ram_element(const McanFrameTransfer &frame,
+                              const McanControllerCapabilities &capabilities,
+                              McanMessageRamElement &element) noexcept {
   element = McanMessageRamElement{};
   const auto status = validate_frame_transfer(frame, capabilities);
   if (!status_ok(status)) {
@@ -264,8 +263,7 @@ McanStatus encode_tx_message_ram_element(
   if (esi) {
     element.words[0] |= kHeaderEsi;
   }
-  element.words[1] = static_cast<std::uint32_t>(frame.dlc)
-                     << kElementDlcShift;
+  element.words[1] = static_cast<std::uint32_t>(frame.dlc) << kElementDlcShift;
   if (brs) {
     element.words[1] |= kElementBrs;
   }
@@ -279,10 +277,10 @@ McanStatus encode_tx_message_ram_element(
   return McanStatus::ok;
 }
 
-McanStatus decode_rx_message_ram_element(
-    const McanMessageRamElement &element,
-    const McanControllerCapabilities &capabilities,
-    McanFrameTransfer &frame) noexcept {
+McanStatus
+decode_rx_message_ram_element(const McanMessageRamElement &element,
+                              const McanControllerCapabilities &capabilities,
+                              McanFrameTransfer &frame) noexcept {
   frame = McanFrameTransfer{};
   auto status = decode_header_words(element, frame);
   if (!status_ok(status)) {

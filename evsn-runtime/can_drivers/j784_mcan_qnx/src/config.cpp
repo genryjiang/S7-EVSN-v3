@@ -5,12 +5,14 @@
 namespace evsn::can_drivers::j784_mcan_qnx {
 namespace {
 
+constexpr auto kMcanConfigMinimumTimeQuanta = std::uint16_t{8U};
+constexpr auto kMcanConfigMaximumTimeQuanta = std::uint16_t{80U};
+constexpr auto kMcanConfigPrescalerMax = std::uint16_t{0x03FFU};
+constexpr auto kMcanConfigTimingSegmentMax = std::uint8_t{0x7FU};
+
 [[nodiscard]] bool
 queue_capacity_is_valid(const std::uint16_t capacity) noexcept {
-  if (capacity == 0U || capacity > kMaxQueueCapacity) {
-    return false;
-  }
-  return (capacity & static_cast<std::uint16_t>(capacity - 1U)) == 0U;
+  return capacity != 0U && capacity <= kMaxQueueCapacity;
 }
 
 [[nodiscard]] bool
@@ -27,8 +29,37 @@ data_bitrate_is_valid(const McanControllerConfig &config) noexcept {
   if (!config.data_bitrate_valid) {
     return false;
   }
-  return config.data_bitrate >= config.arbitration_bitrate &&
+  return config.data_bitrate >= kMinArbitrationBitrate &&
          config.data_bitrate <= kMaxDataBitrate;
+}
+
+[[nodiscard]] bool timing_override_shape_is_valid(
+    const McanControllerTimingOverride &timing) noexcept {
+  if (!timing.valid) {
+    return true;
+  }
+  if (timing.source_clock_hz == 0U || timing.bitrate == 0U ||
+      timing.prescaler == 0U || timing.time_segment_before_sample == 0U ||
+      timing.time_segment_after_sample == 0U || timing.sync_jump_width == 0U) {
+    return false;
+  }
+  if (timing.prescaler > kMcanConfigPrescalerMax ||
+      timing.time_segment_before_sample > kMcanConfigTimingSegmentMax ||
+      timing.time_segment_after_sample > kMcanConfigTimingSegmentMax ||
+      timing.sync_jump_width > kMcanConfigTimingSegmentMax ||
+      timing.sync_jump_width > timing.time_segment_after_sample) {
+    return false;
+  }
+  const auto time_quanta =
+      static_cast<std::uint16_t>(1U + timing.time_segment_before_sample +
+                                 timing.time_segment_after_sample);
+  if (time_quanta < kMcanConfigMinimumTimeQuanta ||
+      time_quanta > kMcanConfigMaximumTimeQuanta) {
+    return false;
+  }
+  const auto expected_clock = static_cast<std::uint64_t>(timing.bitrate) *
+                              timing.prescaler * time_quanta;
+  return expected_clock == timing.source_clock_hz;
 }
 
 [[nodiscard]] bool
@@ -36,7 +67,15 @@ hardware_evidence_is_complete(const McanControllerConfig &config) noexcept {
   return config.qnx_direct_ownership_confirmed &&
          config.board_mapping_evidence_confirmed &&
          config.target_startup_evidence_confirmed &&
-         config.bench_evidence_confirmed;
+         config.transceiver_control_evidence_confirmed &&
+         config.qnx_irq_routing_evidence_confirmed &&
+         config.external_can_bench_evidence_confirmed;
+}
+
+[[nodiscard]] bool
+interrupt_evidence_is_complete(const McanControllerConfig &config) noexcept {
+  return hardware_evidence_is_complete(config) &&
+         config.hardware.qnx_logical_irq != 0U;
 }
 
 [[nodiscard]] bool region_overflows(const McanHardwareRegion &region) noexcept {
@@ -207,8 +246,14 @@ validate_controller_skeleton(const McanControllerConfig &config) noexcept {
   if (!arbitration_bitrate_is_valid(config)) {
     return McanStatus::invalid_bitrate;
   }
+  if (!timing_override_shape_is_valid(config.nominal_timing_override) ||
+      (config.nominal_timing_override.valid &&
+       config.nominal_timing_override.bitrate != config.arbitration_bitrate)) {
+    return McanStatus::invalid_bitrate;
+  }
   if (config.mode == McanMode::classic) {
-    if (config.brs_enabled || config.data_bitrate_valid) {
+    if (config.brs_enabled || config.data_bitrate_valid ||
+        config.data_timing_override.valid) {
       return McanStatus::unsupported_mode;
     }
     return McanStatus::ok;
@@ -219,12 +264,17 @@ validate_controller_skeleton(const McanControllerConfig &config) noexcept {
   if (!data_bitrate_is_valid(config)) {
     return McanStatus::invalid_bitrate;
   }
+  if (!timing_override_shape_is_valid(config.data_timing_override) ||
+      (config.data_timing_override.valid &&
+       config.data_timing_override.bitrate != config.data_bitrate)) {
+    return McanStatus::invalid_bitrate;
+  }
   return McanStatus::ok;
 }
 
-McanStatus validate_hardware_region(
-    const McanHardwareRegion &region,
-    const std::uint32_t minimum_size_bytes) noexcept {
+McanStatus
+validate_hardware_region(const McanHardwareRegion &region,
+                         const std::uint32_t minimum_size_bytes) noexcept {
   if (region.base_address == 0U || region.size_bytes < minimum_size_bytes ||
       (region.base_address & 0x3ULL) != 0U ||
       (region.size_bytes & 0x3U) != 0U || region_overflows(region)) {
@@ -250,7 +300,8 @@ McanStatus validate_controller_hardware_mapping(
   if (config.hardware.tisci_device_id == 0U ||
       regions_overlap(config.hardware.subsystem, config.hardware.controller) ||
       regions_overlap(config.hardware.subsystem, config.hardware.message_ram) ||
-      regions_overlap(config.hardware.controller, config.hardware.message_ram)) {
+      regions_overlap(config.hardware.controller,
+                      config.hardware.message_ram)) {
     return McanStatus::invalid_hardware_mapping;
   }
   return McanStatus::ok;
@@ -263,6 +314,22 @@ McanStatus validate_controller_for_hardware_start(
     return skeleton_status;
   }
   if (!hardware_evidence_is_complete(config)) {
+    return McanStatus::missing_hardware_evidence;
+  }
+  const auto mapping_status = validate_controller_hardware_mapping(config);
+  if (!status_ok(mapping_status)) {
+    return mapping_status;
+  }
+  return McanStatus::ok;
+}
+
+McanStatus validate_controller_for_interrupt_start(
+    const McanControllerConfig &config) noexcept {
+  const auto skeleton_status = validate_controller_skeleton(config);
+  if (!status_ok(skeleton_status)) {
+    return skeleton_status;
+  }
+  if (!interrupt_evidence_is_complete(config)) {
     return McanStatus::missing_hardware_evidence;
   }
   const auto mapping_status = validate_controller_hardware_mapping(config);
@@ -301,6 +368,22 @@ McanStatus validate_resource_manager_hardware_start(
   for (auto index = std::size_t{0U}; index < config.controller_count; ++index) {
     const auto status =
         validate_controller_for_hardware_start(config.controllers[index]);
+    if (!status_ok(status)) {
+      return status;
+    }
+  }
+  return McanStatus::ok;
+}
+
+McanStatus validate_resource_manager_interrupt_start(
+    const McanResourceManagerConfig &config) noexcept {
+  const auto skeleton_status = validate_resource_manager_skeleton(config);
+  if (!status_ok(skeleton_status)) {
+    return skeleton_status;
+  }
+  for (auto index = std::size_t{0U}; index < config.controller_count; ++index) {
+    const auto status =
+        validate_controller_for_interrupt_start(config.controllers[index]);
     if (!status_ok(status)) {
       return status;
     }

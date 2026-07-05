@@ -7,7 +7,10 @@ add_library(
         src/mcan_core.cpp
         src/mcan_message_ram.cpp
         src/mcan_registers.cpp
+        src/qnx_can_compat.cpp
         src/qnx_mmio_mapper.cpp
+        src/resource_manager_runtime.cpp
+        src/transceiver_control.cpp
 )
 
 target_include_directories(
@@ -61,6 +64,27 @@ if(BUILD_TESTING AND EVSN_TARGET_LINUX)
     add_test(NAME j784_mcan_qnx_mmio_mapper_test COMMAND j784_mcan_qnx_mmio_mapper_test)
 
     add_executable(
+        j784_mcan_qnx_qnx_can_compat_test
+        test/j784_mcan_qnx_qnx_can_compat_test.cpp
+    )
+    target_link_libraries(j784_mcan_qnx_qnx_can_compat_test PRIVATE evsn_j784_mcan_qnx GTest::gtest_main)
+    add_test(NAME j784_mcan_qnx_qnx_can_compat_test COMMAND j784_mcan_qnx_qnx_can_compat_test)
+
+    add_executable(
+        j784_mcan_qnx_resource_manager_runtime_test
+        test/j784_mcan_qnx_resource_manager_runtime_test.cpp
+    )
+    target_link_libraries(j784_mcan_qnx_resource_manager_runtime_test PRIVATE evsn_j784_mcan_qnx GTest::gtest_main)
+    add_test(NAME j784_mcan_qnx_resource_manager_runtime_test COMMAND j784_mcan_qnx_resource_manager_runtime_test)
+
+    add_executable(
+        j784_mcan_qnx_transceiver_control_test
+        test/j784_mcan_qnx_transceiver_control_test.cpp
+    )
+    target_link_libraries(j784_mcan_qnx_transceiver_control_test PRIVATE evsn_j784_mcan_qnx GTest::gtest_main)
+    add_test(NAME j784_mcan_qnx_transceiver_control_test COMMAND j784_mcan_qnx_transceiver_control_test)
+
+    add_executable(
         j784_mcan_qnx_registers_test
         test/j784_mcan_qnx_registers_test.cpp
     )
@@ -99,7 +123,10 @@ if(BUILD_TESTING AND EVSN_TARGET_LINUX)
         j784_mcan_qnx_no_gpl_source_copy_test
         j784_mcan_qnx_no_ipc_path_test
         j784_mcan_qnx_private_boundary_test
+        j784_mcan_qnx_qnx_can_compat_test
+        j784_mcan_qnx_resource_manager_runtime_test
         j784_mcan_qnx_registers_test
+        j784_mcan_qnx_transceiver_control_test
         PROPERTIES TIMEOUT 20
     )
 endif()

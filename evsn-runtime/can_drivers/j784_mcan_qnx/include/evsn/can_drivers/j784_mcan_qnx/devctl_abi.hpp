@@ -21,6 +21,17 @@ enum class McanDevctlCommand : std::uint8_t {
   recover_bus = 5U,
 };
 
+constexpr auto kMcanDevctlDirectionFrom = std::uint32_t{0x40000000U};
+constexpr auto kMcanDevctlClass = std::uint32_t{0x4DU};
+
+[[nodiscard]] constexpr std::uint32_t
+make_mcan_devctl_from_command(const McanDevctlCommand command,
+                              const std::uint32_t payload_size) noexcept {
+  return kMcanDevctlDirectionFrom | (payload_size << 16U) |
+         (kMcanDevctlClass << 8U) |
+         static_cast<std::uint32_t>(command);
+}
+
 enum class McanFrameFlag : std::uint32_t {
   extended_id = 1U << 0U,
   fd_frame = 1U << 1U,
@@ -77,6 +88,13 @@ struct McanDiagnosticsSnapshot {
   std::uint32_t last_native_error{0U};
   std::uint32_t reserved{0U};
 };
+
+constexpr auto kMcanDevctlQueryCapabilities =
+    make_mcan_devctl_from_command(McanDevctlCommand::query_capabilities,
+                                  kMcanControllerCapabilitiesStructSize);
+constexpr auto kMcanDevctlQueryDiagnostics =
+    make_mcan_devctl_from_command(McanDevctlCommand::query_diagnostics,
+                                  kMcanDiagnosticsSnapshotStructSize);
 
 [[nodiscard]] constexpr std::uint32_t flag_value(McanFrameFlag flag) noexcept {
   return static_cast<std::uint32_t>(flag);

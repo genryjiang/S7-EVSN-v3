@@ -39,7 +39,10 @@ void mark_hardware_evidence_complete(McanControllerConfig &config) {
   config.qnx_direct_ownership_confirmed = true;
   config.board_mapping_evidence_confirmed = true;
   config.target_startup_evidence_confirmed = true;
-  config.bench_evidence_confirmed = true;
+  config.transceiver_control_evidence_confirmed = true;
+  config.qnx_irq_routing_evidence_confirmed = true;
+  config.external_can_bench_evidence_confirmed = true;
+  config.hardware.qnx_logical_irq = 42U;
 }
 
 } // namespace
@@ -109,6 +112,30 @@ TEST(J784McanQnxConfigTest,
       McanStatus::ok);
 }
 
+TEST(J784McanQnxConfigTest, RejectsInterruptStartWithoutConfirmedLogicalIrq) {
+  auto config = valid_fd_controller(1U);
+  ASSERT_EQ(evsn::can_drivers::j784_mcan_qnx::apply_j784_mcan_board_mapping(
+                config, J784McanPhysicalInstance::mcu_mcan1),
+            McanStatus::ok);
+  config.qnx_direct_ownership_confirmed = true;
+  config.board_mapping_evidence_confirmed = true;
+  config.target_startup_evidence_confirmed = true;
+  config.transceiver_control_evidence_confirmed = true;
+  config.qnx_irq_routing_evidence_confirmed = true;
+  config.external_can_bench_evidence_confirmed = true;
+
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::validate_controller_for_interrupt_start(
+          config),
+      McanStatus::missing_hardware_evidence);
+
+  config.hardware.qnx_logical_irq = 42U;
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::validate_controller_for_interrupt_start(
+          config),
+      McanStatus::ok);
+}
+
 TEST(J784McanQnxConfigTest,
      RejectsHardwareStartWhenEvidenceFlagsExistButMappingIsInvalid) {
   auto config = valid_fd_controller(1U);
@@ -128,7 +155,8 @@ TEST(J784McanQnxConfigTest, RejectsInvalidQueueShapesAndBitrates) {
       McanStatus::invalid_queue);
 
   config = valid_classic_controller(0U);
-  config.rx_queue_capacity = 3U;
+  config.rx_queue_capacity =
+      evsn::can_drivers::j784_mcan_qnx::kMaxQueueCapacity + 1U;
   EXPECT_EQ(
       evsn::can_drivers::j784_mcan_qnx::validate_controller_skeleton(config),
       McanStatus::invalid_queue_capacity);
@@ -150,6 +178,12 @@ TEST(J784McanQnxConfigTest, KeepsClassicAndFdModeRequirementsExplicit) {
 
   config = valid_fd_controller(0U);
   config.data_bitrate = 250'000U;
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::validate_controller_skeleton(config),
+      McanStatus::ok);
+
+  config = valid_fd_controller(0U);
+  config.data_bitrate = 0U;
   EXPECT_EQ(
       evsn::can_drivers::j784_mcan_qnx::validate_controller_skeleton(config),
       McanStatus::invalid_bitrate);

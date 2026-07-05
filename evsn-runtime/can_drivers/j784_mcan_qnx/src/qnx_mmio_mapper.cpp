@@ -15,11 +15,37 @@
 namespace evsn::can_drivers::j784_mcan_qnx {
 namespace {
 
-[[nodiscard]] bool mapped_region_is_valid(
-    const McanMappedMmioRegion &mapped, const std::uint32_t offset) noexcept {
+[[nodiscard]] bool mapped_region_is_valid(const McanMappedMmioRegion &mapped,
+                                          const std::uint32_t offset) noexcept {
   return mapped.address != nullptr && (offset & 0x3U) == 0U &&
          mapped.size_bytes >= sizeof(std::uint32_t) &&
          offset <= mapped.size_bytes - sizeof(std::uint32_t);
+}
+
+McanStatus map_qnx_mmio_region_with_access(const McanHardwareRegion &region,
+                                           McanMappedMmioRegion &mapped,
+                                           const bool writable) noexcept {
+  mapped = McanMappedMmioRegion{};
+  const auto request_status = validate_mmio_mapping_request(region);
+  if (!status_ok(request_status)) {
+    return request_status;
+  }
+#if defined(__QNXNTO__)
+  const auto protection =
+      PROT_READ | PROT_NOCACHE | (writable ? PROT_WRITE : 0);
+  void *const address = mmap_device_memory(nullptr, region.size_bytes,
+                                           protection, 0, region.base_address);
+  if (address == MAP_FAILED) {
+    return McanStatus::hardware_access_unavailable;
+  }
+  mapped.address = static_cast<volatile std::uint8_t *>(address);
+  mapped.size_bytes = region.size_bytes;
+  mapped.physical_base = region.base_address;
+  mapped.writable = writable;
+  return McanStatus::ok;
+#else
+  return McanStatus::hardware_access_unavailable;
+#endif
 }
 
 } // namespace
@@ -42,25 +68,13 @@ McanStatus request_qnx_io_privileges() noexcept {
 
 McanStatus map_qnx_mmio_region(const McanHardwareRegion &region,
                                McanMappedMmioRegion &mapped) noexcept {
-  mapped = McanMappedMmioRegion{};
-  const auto request_status = validate_mmio_mapping_request(region);
-  if (!status_ok(request_status)) {
-    return request_status;
-  }
-#if defined(__QNXNTO__)
-  void *const address = mmap_device_memory(
-      nullptr, region.size_bytes, PROT_READ | PROT_WRITE | PROT_NOCACHE, 0,
-      region.base_address);
-  if (address == MAP_FAILED) {
-    return McanStatus::hardware_access_unavailable;
-  }
-  mapped.address = static_cast<volatile std::uint8_t *>(address);
-  mapped.size_bytes = region.size_bytes;
-  mapped.physical_base = region.base_address;
-  return McanStatus::ok;
-#else
-  return McanStatus::hardware_access_unavailable;
-#endif
+  return map_qnx_mmio_region_with_access(region, mapped, true);
+}
+
+McanStatus
+map_qnx_mmio_region_read_only(const McanHardwareRegion &region,
+                              McanMappedMmioRegion &mapped) noexcept {
+  return map_qnx_mmio_region_with_access(region, mapped, false);
 }
 
 McanStatus unmap_qnx_mmio_region(McanMappedMmioRegion &mapped) noexcept {
@@ -90,8 +104,8 @@ McanStatus read_qnx_mmio32(const McanMappedMmioRegion &mapped,
       offset > mapped.size_bytes - sizeof(std::uint32_t)) {
     return McanStatus::invalid_hardware_mapping;
   }
-  const auto *const word = reinterpret_cast<volatile const std::uint32_t *>(
-      mapped.address + offset);
+  const auto *const word =
+      reinterpret_cast<volatile const std::uint32_t *>(mapped.address + offset);
   value = *word;
   return McanStatus::ok;
 }
@@ -99,7 +113,7 @@ McanStatus read_qnx_mmio32(const McanMappedMmioRegion &mapped,
 McanStatus write_qnx_mmio32(const McanMappedMmioRegion &mapped,
                             const std::uint32_t offset,
                             const std::uint32_t value) noexcept {
-  if (!mapped_region_is_valid(mapped, offset)) {
+  if (!mapped.writable || !mapped_region_is_valid(mapped, offset)) {
     return McanStatus::invalid_hardware_mapping;
   }
   auto *const word =

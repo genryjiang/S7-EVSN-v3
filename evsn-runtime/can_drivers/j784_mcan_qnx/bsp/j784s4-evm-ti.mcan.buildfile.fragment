@@ -1,0 +1,65 @@
+# EVSN VSN-0038 MCAN mkifs/buildfile fragment for J784S4 EVM QNX images.
+#
+# Apply to:
+#   psdkqa/qnx/bsp/BSP_ti-j784s4-evm_be-800_SVN1019295_JBN342/images/j784s4-evm-ti.build
+#
+# This is a fragment, not a complete buildfile.
+
+########################################################################
+# Module staging
+########################################################################
+
+# Add the rebuilt EVSN driver binary to the image. Adjust the left side if the
+# build artifact is staged somewhere else in your BSP build.
+[uid=0 gid=0 perms=0755] /sbin/dev-evsn-mcan-j784 = dev-evsn-mcan-j784
+
+########################################################################
+# Startup script insertion
+########################################################################
+
+# Safe default: stage the binary but do not auto-start external CAN. QNX buildfile
+# startup scripts are not normal shell scripts, so this fragment avoids shell
+# conditionals and leaves bench commands commented until target evidence exists.
+#
+# When building a dedicated external-CAN bench image, place the relevant commands
+# after i2c-tda4 startup and /scripts/configure_i2c_io_expanders.sh, before
+# application services that consume CAN. The inspected BSP already starts
+# /dev/i2c0 and /dev/i2c9; MAIN_MCAN4 uses the /dev/i2c0 TCA6424 path only after
+# the EthFw conflict has been explicitly resolved.
+
+# display_msg EVSN MCAN: validating production ownership scope
+# /sbin/dev-evsn-mcan-j784 --validate-production-ownership-scope
+
+# MCU_MCAN0 and MCU_MCAN1 standby GPIOs are also driven in startup. This command
+# provides runtime evidence and applies non-conflicting transceiver actions from
+# the resource manager implementation.
+# display_msg EVSN MCAN: applying non-conflicting transceiver controls
+# /sbin/dev-evsn-mcan-j784 --enable-transceivers
+
+# MAIN_MCAN4 is disabled by the inspected Ethernet-firmware overlay. Enable this
+# only in a QNX image where EthFw is not disabling main_mcan4/transceiver3/mux1.
+# /sbin/dev-evsn-mcan-j784 --enable-transceivers-main-mcan4 /dev/i2c0
+
+# External bus resource-manager launches. These use the interrupt-driven
+# hardware path with Bosch internal loopback disabled. Candidate logical IRQs are
+# the Linux/PDK line-0 defaults recorded in VSN-0038 metadata and must be
+# confirmed on the target QNX image before production use.
+#
+# Endpoint map:
+#   0 MCU_MCAN0  J42  candidate IRQ 864
+#   1 MCU_MCAN1  J43  confirmed IRQ 867 for earlier internal-loopback smoke
+#   2 MAIN_MCAN4 J45  candidate IRQ 168; EthFw conflict must be resolved
+#   3 MAIN_MCAN16 J46 candidate IRQ 816
+
+# /sbin/dev-evsn-mcan-j784 --external-can-resource-manager-endpoint 0 864 &
+# /sbin/dev-evsn-mcan-j784 --external-can-resource-manager-endpoint 1 867 &
+# /sbin/dev-evsn-mcan-j784 --external-can-resource-manager-endpoint 2 168 &
+# /sbin/dev-evsn-mcan-j784 --external-can-resource-manager-endpoint 3 816 &
+
+# Optional classic QNX CAN compatibility mirror. Use this instead of the
+# private launches above only when legacy /dev/canN/rxM and /dev/canN/txM
+# clients must own the namespace.
+#
+# /sbin/dev-evsn-mcan-j784 --qnx-can-compat-external-can-resource-manager-endpoint 0 864 &
+# /sbin/dev-evsn-mcan-j784 --qnx-can-compat-external-can-resource-manager-endpoint 1 867 &
+# /sbin/dev-evsn-mcan-j784 --qnx-can-compat-external-can-resource-manager-endpoint 3 816 &

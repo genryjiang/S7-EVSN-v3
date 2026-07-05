@@ -13,6 +13,7 @@ constexpr auto kInterruptRxFifo0NewMessage = std::uint32_t{1U << 0U};
 constexpr auto kInterruptRxFifo0Full = std::uint32_t{1U << 2U};
 constexpr auto kInterruptRxFifo0MessageLost = std::uint32_t{1U << 3U};
 constexpr auto kInterruptTxComplete = std::uint32_t{1U << 9U};
+constexpr auto kInterruptTxCancellationFinished = std::uint32_t{1U << 10U};
 constexpr auto kInterruptMessageRamAccessFailure = std::uint32_t{1U << 17U};
 constexpr auto kInterruptBitErrorCorrected = std::uint32_t{1U << 20U};
 constexpr auto kInterruptBitErrorUncorrected = std::uint32_t{1U << 21U};
@@ -49,6 +50,7 @@ constexpr auto kExtendedIdMaskAllBits = std::uint32_t{0x1FFFFFFFU};
 std::uint32_t mcan_rx_tx_error_interrupt_mask() noexcept {
   return kInterruptRxFifo0NewMessage | kInterruptRxFifo0Full |
          kInterruptRxFifo0MessageLost | kInterruptTxComplete |
+         kInterruptTxCancellationFinished |
          kInterruptMessageRamAccessFailure | kInterruptBitErrorCorrected |
          kInterruptBitErrorUncorrected | kInterruptErrorLoggingOverflow |
          kInterruptErrorPassive | kInterruptWarning | kInterruptBusOff |

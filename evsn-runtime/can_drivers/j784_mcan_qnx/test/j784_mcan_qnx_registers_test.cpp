@@ -4,9 +4,9 @@
 
 namespace {
 
+using evsn::can_drivers::j784_mcan_qnx::McanCfgRegisterOffset;
 using evsn::can_drivers::j784_mcan_qnx::McanControllerConfig;
 using evsn::can_drivers::j784_mcan_qnx::McanCoreConfig;
-using evsn::can_drivers::j784_mcan_qnx::McanCfgRegisterOffset;
 using evsn::can_drivers::j784_mcan_qnx::McanMode;
 using evsn::can_drivers::j784_mcan_qnx::McanRegisterProgramming;
 using evsn::can_drivers::j784_mcan_qnx::McanSsRegisterOffset;
@@ -43,11 +43,35 @@ McanCoreConfig loopback_config() {
 
 TEST(J784McanQnxRegistersTest, KeepsSdkBackedOffsetsStable) {
   EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanCfgRegisterOffset::crel),
+            0x00U);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanCfgRegisterOffset::endn),
+            0x04U);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
                 McanCfgRegisterOffset::cccr),
             0x18U);
   EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
                 McanCfgRegisterOffset::nbtp),
             0x1CU);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanCfgRegisterOffset::ecr),
+            0x40U);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanCfgRegisterOffset::psr),
+            0x44U);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::offset_value(McanCfgRegisterOffset::ir),
+      0x50U);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::offset_value(McanCfgRegisterOffset::ie),
+      0x54U);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanCfgRegisterOffset::ils),
+            0x58U);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanCfgRegisterOffset::ile),
+            0x5CU);
   EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
                 McanCfgRegisterOffset::rxf0c),
             0xA0U);
@@ -55,24 +79,33 @@ TEST(J784McanQnxRegistersTest, KeepsSdkBackedOffsetsStable) {
                 McanCfgRegisterOffset::txbar),
             0xD0U);
   EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
-                McanSsRegisterOffset::ie),
-            0x18U);
+                McanCfgRegisterOffset::txbrp),
+            0xCCU);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::offset_value(McanSsRegisterOffset::pid),
+      0x00U);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanSsRegisterOffset::ctrl),
+            0x04U);
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::offset_value(
+                McanSsRegisterOffset::stat),
+            0x08U);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::offset_value(McanSsRegisterOffset::ie),
+      0x18U);
 }
 
 TEST(J784McanQnxRegistersTest, EncodesBoschNominalAndDataBitTimingFields) {
   auto encoded = std::uint32_t{0U};
-  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::
-                encode_nominal_bit_timing_register(
-                    evsn::can_drivers::j784_mcan_qnx::
-                        make_classic_500k_timing(),
-                    encoded),
-            McanStatus::ok);
+  EXPECT_EQ(
+      evsn::can_drivers::j784_mcan_qnx::encode_nominal_bit_timing_register(
+          evsn::can_drivers::j784_mcan_qnx::make_classic_500k_timing(),
+          encoded),
+      McanStatus::ok);
   EXPECT_EQ(encoded, 0x00090C01U);
 
-  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::
-                encode_data_bit_timing_register(
-                    evsn::can_drivers::j784_mcan_qnx::make_fd_2m_timing(),
-                    encoded),
+  EXPECT_EQ(evsn::can_drivers::j784_mcan_qnx::encode_data_bit_timing_register(
+                evsn::can_drivers::j784_mcan_qnx::make_fd_2m_timing(), encoded),
             McanStatus::ok);
   EXPECT_EQ(encoded, 0x00030610U);
 }
